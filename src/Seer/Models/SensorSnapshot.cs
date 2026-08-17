@@ -45,3 +45,18 @@ public record MemoryMetrics
         ? UsedGb.Value + AvailableGb.Value
         : null;
 }
+
+/// <summary>
+/// Snapshot of GPU sensor readings. Generally all fields work without admin.
+/// </summary>
+public record GpuMetrics
+{
+    public float? Temperature { get; init; }
+    public float? HotSpotTemperature { get; init; }
+    public float? FanRpm { get; init; }
+    public float? FanPercent { get; init; }
+    public float? Load { get; init; }
+    public float? Clock { get; init; }
+    public float? VramUsedGb { get; init; }
+    public float? VramTotalGb { get; init; }
+}

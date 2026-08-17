@@ -106,16 +106,17 @@
                         </Grid>
                     </StackPanel>
 
-                    <!-- GPU bar placeholder (static for now) -->
+                    <!-- GPU bar -->
                     <StackPanel Grid.Column="2" Margin="0,0,8,0">
                         <TextBlock Text="GPU"
                                    Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
                         <Grid>
                             <Border Style="{StaticResource StatusBarTrackStyle}" />
-                            <Border Background="{StaticResource SeerAccentTertiary}"
+                            <Border x:Name="GpuStatusBar"
+                                    Background="{StaticResource SeerAccentTertiary}"
                                     Height="4" CornerRadius="0"
                                     HorizontalAlignment="Left"
-                                    Width="30" />
+                                    Width="0" />
                         </Grid>
                     </StackPanel>
 
@@ -212,7 +213,7 @@
                     </Grid>
                 </Border>
 
-                <!-- [3] GPU Panel (spans full width on bottom row) — static placeholder for now -->
+                <!-- [3] GPU Panel (spans full width on bottom row) -->
                 <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource PanelStyle}">
                     <Grid>
@@ -229,20 +230,40 @@
                                        Style="{StaticResource PanelHeaderStyle}" />
                         </Border>
 
-                        <StackPanel Grid.Row="1" Margin="12,10">
-                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- °C" />
+                        <Grid Grid.Row="1" Margin="12,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Column 0 -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuTempValue" Text="--" /><Run x:Name="GpuTempUnit" Text=" °C" />
                             </TextBlock>
-                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- %" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuLoadValue" Text="--" /><Run x:Name="GpuLoadUnit" Text=" %" />
                             </TextBlock>
-                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Clock:        " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- MHz" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource BaseTextStyle}">
+                                <Run Text="Clock:        " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuClockValue" Text="--" /><Run x:Name="GpuClockUnit" Text=" MHz" />
                             </TextBlock>
-                            <TextBlock Style="{StaticResource BaseTextStyle}">
-                                <Run Text="VRAM:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- / -- GB" />
+
+                            <!-- Column 2 -->
+                            <TextBlock Grid.Row="0" Grid.Column="2" Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Hot Spot:     " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuHotSpotValue" Text="--" /><Run x:Name="GpuHotSpotUnit" Text=" °C" />
                             </TextBlock>
-                        </StackPanel>
+                            <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Fan Speed:    " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuFanValue" Text="--" /><Run x:Name="GpuFanUnit" Text=" RPM" />
+                            </TextBlock>
+                            <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource BaseTextStyle}">
+                                <Run Text="VRAM:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuVramValue" Text="-- / -- GB" />
+                            </TextBlock>
+                        </Grid>
                     </Grid>
                 </Border>
             </Grid>

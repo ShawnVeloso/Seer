@@ -6,9 +6,9 @@
 ---
 
 ## Current Focus
-- **Working on:** Nothing (awaiting PR review for live CPU/Memory panels)
-- **Next up:** Wire live GPU data into the UI
-- **Then:** Status strip percentage bindings
+- **Working on:** Nothing (awaiting PR review for live GPU panel)
+- **Next up:** Status strip percentage bindings
+- **Then:** Refactoring or polish
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -25,6 +25,7 @@
 | Design system → WPF ResourceDictionary | ✅ Complete | `Styles/Theme.xaml` |
 | Placeholder UI shell | ✅ Complete | Title bar, status strip, 3 panels |
 | Live CPU/Memory Panels | ✅ Complete | Wired to DispatcherTimer; admin fallback logic implemented |
+| Live GPU Panel | ✅ Complete | Adds Hot Spot and Fan Speed; fits in 2 columns |
 
 ---
 
@@ -59,13 +60,13 @@
 
 | File | Purpose |
 |------|---------|
-| `src/Seer/Models/SensorSnapshot.cs` | Typed records for sensor readings (`CpuMetrics`, `MemoryMetrics`), handling nullable/elevation-gated values |
+| `src/Seer/Models/SensorSnapshot.cs` | Typed records for sensor readings (`CpuMetrics`, `MemoryMetrics`, `GpuMetrics`), handling nullable/elevation-gated values |
 
 ### Services
 
 | File | Feature | Purpose |
 |------|---------|---------|
-| `src/Seer/Services/HardwareMonitorService.cs` | Sensor access | Wraps `Computer`; `GetCpuMetrics()`, `GetMemoryMetrics()`, and smoke test |
+| `src/Seer/Services/HardwareMonitorService.cs` | Sensor access | Wraps `Computer`; `GetCpuMetrics()`, `GetMemoryMetrics()`, `GetGpuMetrics()`, and smoke test |
 
 ---
 
@@ -125,6 +126,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-17 | Antigravity | feat: wire live GPU sensor data to UI panel |
 | 2026-08-17 | Antigravity | feat: wire live CPU and memory sensor data to UI panels |
 | 2026-08-17 | Antigravity | docs: document admin elevation constraint for CPU sensor reads |
 | 2026-08-17 | Antigravity | feat: initial project scaffold — .NET 8 WPF project, LibreHardwareMonitorLib smoke test (3 devices/96 sensors on Ryzen 7 5700X3D + RTX 3060), design system ResourceDictionary, placeholder UI shell with custom chrome |

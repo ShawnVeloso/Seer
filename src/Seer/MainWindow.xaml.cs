@@ -45,6 +45,7 @@ public partial class MainWindow : Window
     {
         UpdateCpuPanel();
         UpdateMemoryPanel();
+        UpdateGpuPanel();
     }
 
     /// <summary>
@@ -153,6 +154,108 @@ public partial class MainWindow : Window
         else
         {
             MemAvailValue.Text = "-- GB";
+        }
+    }
+
+    /// <summary>
+    /// Updates the GPU panel values. 
+    /// Adds warning brush fallback for null values, even though GPU sensors 
+    /// generally do not require elevation.
+    /// </summary>
+    private void UpdateGpuPanel()
+    {
+        var gpu = _monitor.GetGpuMetrics();
+
+        // Temperature
+        if (gpu.Temperature.HasValue)
+        {
+            GpuTempValue.Text = gpu.Temperature.Value.ToString("F0");
+            GpuTempValue.Foreground = _normalBrush;
+            GpuTempUnit.Foreground = _normalBrush;
+        }
+        else
+        {
+            GpuTempValue.Text = "--";
+            GpuTempValue.Foreground = _warningBrush;
+            GpuTempUnit.Foreground = _warningBrush;
+        }
+
+        // Load
+        if (gpu.Load.HasValue)
+        {
+            GpuLoadValue.Text = gpu.Load.Value.ToString("F1");
+            GpuLoadValue.Foreground = _normalBrush;
+            GpuLoadUnit.Foreground = _normalBrush;
+            UpdateStatusBar(GpuStatusBar, gpu.Load.Value);
+        }
+        else
+        {
+            GpuLoadValue.Text = "--";
+            GpuLoadValue.Foreground = _warningBrush;
+            GpuLoadUnit.Foreground = _warningBrush;
+        }
+
+        // Clock
+        if (gpu.Clock.HasValue)
+        {
+            GpuClockValue.Text = gpu.Clock.Value.ToString("F0");
+            GpuClockValue.Foreground = _normalBrush;
+            GpuClockUnit.Foreground = _normalBrush;
+        }
+        else
+        {
+            GpuClockValue.Text = "--";
+            GpuClockValue.Foreground = _warningBrush;
+            GpuClockUnit.Foreground = _warningBrush;
+        }
+
+        // Hot Spot
+        if (gpu.HotSpotTemperature.HasValue)
+        {
+            GpuHotSpotValue.Text = gpu.HotSpotTemperature.Value.ToString("F0");
+            GpuHotSpotValue.Foreground = _normalBrush;
+            GpuHotSpotUnit.Foreground = _normalBrush;
+        }
+        else
+        {
+            GpuHotSpotValue.Text = "--";
+            GpuHotSpotValue.Foreground = _warningBrush;
+            GpuHotSpotUnit.Foreground = _warningBrush;
+        }
+
+        // Fan (prefer RPM, fallback to %)
+        if (gpu.FanRpm.HasValue)
+        {
+            GpuFanValue.Text = gpu.FanRpm.Value.ToString("F0");
+            GpuFanUnit.Text = " RPM";
+            GpuFanValue.Foreground = _normalBrush;
+            GpuFanUnit.Foreground = _normalBrush;
+        }
+        else if (gpu.FanPercent.HasValue)
+        {
+            GpuFanValue.Text = gpu.FanPercent.Value.ToString("F1");
+            GpuFanUnit.Text = " %";
+            GpuFanValue.Foreground = _normalBrush;
+            GpuFanUnit.Foreground = _normalBrush;
+        }
+        else
+        {
+            GpuFanValue.Text = "--";
+            GpuFanUnit.Text = " RPM";
+            GpuFanValue.Foreground = _warningBrush;
+            GpuFanUnit.Foreground = _warningBrush;
+        }
+
+        // VRAM
+        if (gpu.VramUsedGb.HasValue && gpu.VramTotalGb.HasValue)
+        {
+            GpuVramValue.Text = $"{gpu.VramUsedGb.Value:F1} / {gpu.VramTotalGb.Value:F1} GB";
+            GpuVramValue.Foreground = _normalBrush;
+        }
+        else
+        {
+            GpuVramValue.Text = "-- / -- GB";
+            GpuVramValue.Foreground = _warningBrush;
         }
     }
 

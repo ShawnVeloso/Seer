@@ -177,13 +177,98 @@ public sealed class HardwareMonitorService : IDisposable
     }
 
     /// <summary>
+    /// Returns a snapshot of current GPU sensor readings.
+    /// Most GPU sensors work without admin elevation.
+    /// </summary>
+    public GpuMetrics GetGpuMetrics()
+    {
+        Open();
+
+        float? temp = null;
+        float? hotSpot = null;
+        float? fanRpm = null;
+        float? fanPercent = null;
+        float? load = null;
+        float? clock = null;
+        float? vramUsed = null;
+        float? vramTotal = null;
+
+        foreach (IHardware hardware in _computer.Hardware)
+        {
+            if (hardware.HardwareType != HardwareType.GpuNvidia && 
+                hardware.HardwareType != HardwareType.GpuAmd &&
+                hardware.HardwareType != HardwareType.GpuIntel)
+                continue;
+
+            hardware.Update();
+
+            foreach (ISensor sensor in hardware.Sensors)
+            {
+                if (sensor.SensorType == SensorType.Temperature)
+                {
+                    if (sensor.Name.Contains("Hot Spot", StringComparison.OrdinalIgnoreCase))
+                        hotSpot = NullIfInvalid(sensor.Value);
+                    else if (sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase) || temp == null)
+                        temp = NullIfInvalid(sensor.Value);
+                }
+                else if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase))
+                {
+                    load = NullIfInvalid(sensor.Value, allowZero: true);
+                }
+                else if (sensor.SensorType == SensorType.Clock && sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase))
+                {
+                    clock = NullIfInvalid(sensor.Value);
+                }
+                else if (sensor.SensorType == SensorType.Fan)
+                {
+                    fanRpm = NullIfInvalid(sensor.Value, allowZero: true);
+                }
+                else if (sensor.SensorType == SensorType.Control)
+                {
+                    fanPercent = NullIfInvalid(sensor.Value, allowZero: true);
+                }
+                else if (sensor.SensorType == SensorType.SmallData || sensor.SensorType == SensorType.Data)
+                {
+                    if (sensor.Name.Contains("Memory Used", StringComparison.OrdinalIgnoreCase))
+                        vramUsed = NullIfInvalid(sensor.Value, allowZero: true);
+                    else if (sensor.Name.Contains("Memory Total", StringComparison.OrdinalIgnoreCase))
+                        vramTotal = NullIfInvalid(sensor.Value);
+                }
+            }
+
+            break; // Only process first GPU
+        }
+
+        // LibreHardwareMonitorLib returns GPU memory in MB for SmallData.
+        // Convert to GB for consistency with MemoryMetrics.
+        if (vramUsed.HasValue) vramUsed = vramUsed.Value / 1024f;
+        if (vramTotal.HasValue) vramTotal = vramTotal.Value / 1024f;
+
+        return new GpuMetrics
+        {
+            Temperature = temp,
+            HotSpotTemperature = hotSpot,
+            FanRpm = fanRpm,
+            FanPercent = fanPercent,
+            Load = load,
+            Clock = clock,
+            VramUsedGb = vramUsed,
+            VramTotalGb = vramTotal
+        };
+    }
+
+    /// <summary>
     /// Returns null for sensor values that indicate "not available" —
-    /// NaN, 0, or negative. These are the values LibreHardwareMonitorLib
+    /// NaN, negative, or (optionally) 0. These are the values LibreHardwareMonitorLib
     /// returns for elevation-gated sensors when running non-elevated.
     /// </summary>
-    private static float? NullIfInvalid(float? value)
+    private static float? NullIfInvalid(float? value, bool allowZero = false)
     {
-        if (value == null || float.IsNaN(value.Value) || value.Value <= 0)
+        if (value == null || float.IsNaN(value.Value))
+            return null;
+        if (!allowZero && value.Value <= 0)
+            return null;
+        if (allowZero && value.Value < 0)
             return null;
         return value;
     }
