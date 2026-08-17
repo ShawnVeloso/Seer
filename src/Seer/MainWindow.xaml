@@ -8,7 +8,11 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="{StaticResource SeerBackground}"
-        ResizeMode="CanResizeWithGrip">
+        ResizeMode="CanResizeWithGrip"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
 
     <!-- Custom chrome: remove default title bar, we draw our own -->
     <WindowChrome.WindowChrome>

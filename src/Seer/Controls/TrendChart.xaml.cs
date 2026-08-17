@@ -28,9 +28,9 @@ public partial class TrendChart : UserControl
                 ChartLine.Effect = new DropShadowEffect
                 {
                     Color = solidBrush.Color,
-                    BlurRadius = 8,
+                    BlurRadius = 12,
                     ShadowDepth = 0,
-                    Opacity = 0.8
+                    Opacity = 1.0
                 };
             }
         }

@@ -20,9 +20,10 @@
                        Panel.ZIndex="1"/>
                        
             <!-- Graph Canvas -->
-            <Canvas x:Name="ChartCanvas" ClipToBounds="True" Margin="0,16,0,0">
+            <!-- ClipToBounds="False" so the glow effect isn't clipped at the edges -->
+            <Canvas x:Name="ChartCanvas" ClipToBounds="False" Margin="0,16,0,0">
                 <Polyline x:Name="ChartLine" 
-                          StrokeThickness="1.5"
+                          StrokeThickness="2"
                           StrokeLineJoin="Round" />
             </Canvas>
         </Grid>
