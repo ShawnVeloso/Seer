@@ -38,10 +38,10 @@
 
 | File | Purpose |
 |------|---------|
-| `Seer.csproj` | .NET 8 WPF project file; NuGet ref to LibreHardwareMonitorLib |
-| `app.manifest` | Requests admin elevation for hardware sensor access |
-| `App.xaml` / `App.xaml.cs` | WPF application entry point; merges Theme.xaml, runs sensor smoke test |
-| `MainWindow.xaml` / `MainWindow.xaml.cs` | Main UI shell — custom chrome title bar, status strip, placeholder panels |
+| `src/Seer/Seer.csproj` | .NET 8 WPF project file; NuGet ref to LibreHardwareMonitorLib |
+| `src/Seer/app.manifest` | Requests admin elevation for hardware sensor access |
+| `src/Seer/App.xaml` / `src/Seer/App.xaml.cs` | WPF application entry point; merges Theme.xaml, runs sensor smoke test |
+| `src/Seer/MainWindow.xaml` / `src/Seer/MainWindow.xaml.cs` | Main UI shell — custom chrome title bar, status strip, placeholder panels |
 | `.gitignore` | Standard .NET gitignore (bin/, obj/, .vs/, etc.) |
 | `seer_design_system.md` | Front-end design reference (colors, typography, layout rules) |
 | `AGENTS.md` | Agent rulebook (all project rules in one place) |
@@ -52,13 +52,13 @@
 
 | File | Purpose |
 |------|---------|
-| `Styles/Theme.xaml` | WPF ResourceDictionary — all design system tokens (colors, brushes, typography, panel/button styles) |
+| `src/Seer/Styles/Theme.xaml` | WPF ResourceDictionary — all design system tokens (colors, brushes, typography, panel/button styles) |
 
 ### Services
 
 | File | Feature | Purpose |
 |------|---------|---------|
-| `Services/HardwareMonitorService.cs` | Sensor access | Wraps LibreHardwareMonitorLib `Computer`; `RunSmokeTest()` enumerates hardware/sensors |
+| `src/Seer/Services/HardwareMonitorService.cs` | Sensor access | Wraps LibreHardwareMonitorLib `Computer`; `RunSmokeTest()` enumerates hardware/sensors |
 
 ---
 
@@ -67,10 +67,10 @@
 ```
 Single-process WPF app (requires admin elevation for sensor access).
 
-  App.xaml.cs          → startup, smoke test trigger
-  MainWindow.xaml      → UI shell (custom chrome, placeholder panels)
-  Styles/Theme.xaml    → design tokens (colors, typography, styles)
-  Services/            → sensor logic (separated from UI per AGENTS.md §4)
+  src/Seer/App.xaml.cs          → startup, smoke test trigger
+  src/Seer/MainWindow.xaml      → UI shell (custom chrome, placeholder panels)
+  src/Seer/Styles/Theme.xaml    → design tokens (colors, typography, styles)
+  src/Seer/Services/            → sensor logic (separated from UI per AGENTS.md §4)
 ```
 
 > A full ARCHITECTURE.md is intentionally NOT created at project start — see
@@ -85,7 +85,7 @@ Single-process WPF app (requires admin elevation for sensor access).
 | Variable | Source | Value |
 |----------|--------|-------|
 | Admin elevation | `app.manifest` | `requireAdministrator` — needed for LibreHardwareMonitorLib kernel drivers |
-| Target framework | `Seer.csproj` | `net8.0-windows` |
+| Target framework | `src/Seer/Seer.csproj` | `net8.0-windows` |
 | LibreHardwareMonitorLib | NuGet | `0.9.4` |
 
 ---
@@ -94,11 +94,11 @@ Single-process WPF app (requires admin elevation for sensor access).
 
 ```bash
 # Build
-dotnet build
+dotnet build src/Seer/Seer.csproj
 
 # Run (requires admin elevation — will trigger UAC prompt)
-dotnet run
-# or launch bin/Debug/net8.0-windows/Seer.exe as Administrator
+dotnet run --project src/Seer/Seer.csproj
+# or launch src/Seer/bin/Debug/net8.0-windows/Seer.exe as Administrator
 ```
 
 ---
