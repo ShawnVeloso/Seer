@@ -14,7 +14,7 @@
           into an elevated service + unprivileged UI. For now, the
           entire app requests elevation.
         -->
-        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
       </requestedPrivileges>
     </security>
   </trustInfo>

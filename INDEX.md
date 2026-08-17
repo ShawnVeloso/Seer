@@ -6,7 +6,7 @@
 ---
 
 ## Current Focus
-- **Working on:** Nothing (awaiting PR review for live CPU/Memory panels)
+- **Working on:** Nothing (awaiting PR review for Elevation-on-demand)
 - **Next up:** Wire live GPU data into the UI
 - **Then:** Status strip percentage bindings
 - **Blocked on:** nothing
@@ -25,6 +25,7 @@
 | Design system → WPF ResourceDictionary | ✅ Complete | `Styles/Theme.xaml` |
 | Placeholder UI shell | ✅ Complete | Title bar, status strip, 3 panels |
 | Live CPU/Memory Panels | ✅ Complete | Wired to DispatcherTimer; admin fallback logic implemented |
+| Elevation-on-demand | ✅ Complete | Defaults to non-elevated, in-app UX for admin relaunch |
 
 ---
 
@@ -91,7 +92,7 @@ Single-process WPF app (requires admin elevation for sensor access).
 
 | Variable | Source | Value |
 |----------|--------|-------|
-| Admin elevation | `app.manifest` | `requireAdministrator` — needed for LibreHardwareMonitorLib kernel drivers |
+| Admin elevation | `app.manifest` | `asInvoker` by default; in-app relaunch uses `requireAdministrator` equivalent via `Verb="runas"` |
 | Target framework | `src/Seer/Seer.csproj` | `net8.0-windows` |
 | LibreHardwareMonitorLib | NuGet | `0.9.4` |
 
@@ -105,9 +106,8 @@ Single-process WPF app (requires admin elevation for sensor access).
 # Build
 dotnet build src/Seer/Seer.csproj
 
-# Run (requires admin elevation — will trigger UAC prompt)
+# Run (defaults to non-elevated)
 dotnet run --project src/Seer/Seer.csproj
-# or launch src/Seer/bin/Debug/net8.0-windows/Seer.exe as Administrator
 ```
 
 ---
@@ -125,6 +125,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-17 | Antigravity | feat: implement elevation-on-demand default behavior and UI |
 | 2026-08-17 | Antigravity | feat: wire live CPU and memory sensor data to UI panels |
 | 2026-08-17 | Antigravity | docs: document admin elevation constraint for CPU sensor reads |
 | 2026-08-17 | Antigravity | feat: initial project scaffold — .NET 8 WPF project, LibreHardwareMonitorLib smoke test (3 devices/96 sensors on Ryzen 7 5700X3D + RTX 3060), design system ResourceDictionary, placeholder UI shell with custom chrome |
