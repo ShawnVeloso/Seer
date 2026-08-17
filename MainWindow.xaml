@@ -1,0 +1,249 @@
+<Window x:Class="Seer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Seer"
+        Width="720" Height="520"
+        MinWidth="520" MinHeight="400"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="{StaticResource SeerBackground}"
+        ResizeMode="CanResizeWithGrip">
+
+    <!-- Custom chrome: remove default title bar, we draw our own -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32"
+                      ResizeBorderThickness="6"
+                      GlassFrameThickness="0"
+                      CornerRadius="0"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Border Background="{StaticResource SeerBackground}"
+            BorderBrush="{StaticResource SeerBorder}"
+            BorderThickness="1"
+            CornerRadius="0">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="32" />   <!-- Title bar -->
+                <RowDefinition Height="Auto" /> <!-- Status strip -->
+                <RowDefinition Height="*" />    <!-- Main panels -->
+            </Grid.RowDefinitions>
+
+            <!-- ═══ Title Bar (32px) ═══ -->
+            <Border Grid.Row="0"
+                    Background="{StaticResource SeerPanel}"
+                    BorderBrush="{StaticResource SeerBorder}"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Wordmark -->
+                    <TextBlock Grid.Column="0"
+                               Text="SEER"
+                               Style="{StaticResource WordmarkStyle}"
+                               Margin="12,0,0,0" />
+
+                    <!-- Window controls -->
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                        <Button Style="{StaticResource TitleBarButtonStyle}"
+                                Content="─"
+                                Click="MinimizeButton_Click" />
+                        <Button Style="{StaticResource TitleBarButtonStyle}"
+                                Content="□"
+                                Click="MaximizeButton_Click" />
+                        <Button Style="{StaticResource CloseButtonStyle}"
+                                Content="✕"
+                                Click="CloseButton_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- ═══ Status Strip ═══ -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource SeerPanel}"
+                    BorderBrush="{StaticResource SeerBorder}"
+                    BorderThickness="0,0,0,1"
+                    Padding="12,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- CPU bar placeholder -->
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Text="CPU"
+                                   Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
+                        <Grid>
+                            <Border Style="{StaticResource StatusBarTrackStyle}" />
+                            <Border Background="{StaticResource SeerAccent}"
+                                    Height="4" CornerRadius="0"
+                                    HorizontalAlignment="Left"
+                                    Width="60" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- MEM bar placeholder -->
+                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                        <TextBlock Text="MEM"
+                                   Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
+                        <Grid>
+                            <Border Style="{StaticResource StatusBarTrackStyle}" />
+                            <Border Background="{StaticResource SeerAccentSecondary}"
+                                    Height="4" CornerRadius="0"
+                                    HorizontalAlignment="Left"
+                                    Width="45" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- GPU bar placeholder -->
+                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                        <TextBlock Text="GPU"
+                                   Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
+                        <Grid>
+                            <Border Style="{StaticResource StatusBarTrackStyle}" />
+                            <Border Background="{StaticResource SeerAccentTertiary}"
+                                    Height="4" CornerRadius="0"
+                                    HorizontalAlignment="Left"
+                                    Width="30" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Status badge (pill — exception to sharp corners rule) -->
+                    <Border Grid.Column="3"
+                            Background="#1A3DDC84"
+                            BorderBrush="{StaticResource SeerSuccess}"
+                            BorderThickness="1"
+                            CornerRadius="9999"
+                            Padding="10,2"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="NOMINAL"
+                                   Style="{StaticResource TagStyle}"
+                                   Foreground="{StaticResource SeerSuccess}" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- ═══ Main Panels ═══ -->
+            <Grid Grid.Row="2" Margin="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="12" /> <!-- Gap -->
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" /> <!-- Gap -->
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- [1] CPU Panel -->
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource PanelStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Panel header -->
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6">
+                            <TextBlock Text="[1] CPU"
+                                       Style="{StaticResource PanelHeaderStyle}" />
+                        </Border>
+
+                        <!-- Panel content placeholder -->
+                        <StackPanel Grid.Row="1" Margin="12,10">
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- °C" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- %" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Clock:        " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- MHz" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}">
+                                <Run Text="Power:        " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- W" />
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- [2] MEMORY Panel -->
+                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource PanelStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6">
+                            <TextBlock Text="[2] MEMORY"
+                                       Style="{StaticResource PanelHeaderStyle}" />
+                        </Border>
+
+                        <StackPanel Grid.Row="1" Margin="12,10">
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Used:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- / -- GB" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- %" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}">
+                                <Run Text="Available:    " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- GB" />
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- [3] GPU Panel (spans full width on bottom row) -->
+                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                        Style="{StaticResource PanelStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6">
+                            <TextBlock Text="[3] GPU"
+                                       Style="{StaticResource PanelHeaderStyle}" />
+                        </Border>
+
+                        <StackPanel Grid.Row="1" Margin="12,10">
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- °C" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- %" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Clock:        " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- MHz" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}">
+                                <Run Text="VRAM:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- / -- GB" />
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

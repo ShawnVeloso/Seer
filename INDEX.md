@@ -1,14 +1,14 @@
-# [Project Name TBD] — Agent Log Index
+# Seer — Agent Log Index
 
 > **Purpose:** Persistent state-tracking for AI agents and the lead developer.
-> **Last Updated:** [YYYY-MM-DDThh:mm] ([timezone])
+> **Last Updated:** 2026-08-17T16:14 (+08:00)
 
 ---
 
 ## Current Focus
-- **Working on:** None
-- **Next up:** TBD
-- **Then:** TBD
+- **Working on:** Nothing (scaffold complete, awaiting PR review)
+- **Next up:** Wire live sensor data into the placeholder panels
+- **Then:** Status strip with real CPU/MEM/GPU percentage bars
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -20,7 +20,10 @@
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| _(none yet)_ | | |
+| Project scaffold (WPF/.NET 8) | ✅ Complete | PR pending review |
+| LibreHardwareMonitorLib smoke test | ✅ Complete | 3 devices / 96 sensors detected; CPU temps/clocks need admin |
+| Design system → WPF ResourceDictionary | ✅ Complete | `Styles/Theme.xaml` |
+| Placeholder UI shell | ✅ Complete | Title bar, status strip, 3 panels |
 
 ---
 
@@ -35,26 +38,39 @@
 
 | File | Purpose |
 |------|---------|
-| _(populate as scaffolding is created)_ | |
+| `Seer.csproj` | .NET 8 WPF project file; NuGet ref to LibreHardwareMonitorLib |
+| `app.manifest` | Requests admin elevation for hardware sensor access |
+| `App.xaml` / `App.xaml.cs` | WPF application entry point; merges Theme.xaml, runs sensor smoke test |
+| `MainWindow.xaml` / `MainWindow.xaml.cs` | Main UI shell — custom chrome title bar, status strip, placeholder panels |
+| `.gitignore` | Standard .NET gitignore (bin/, obj/, .vs/, etc.) |
+| `seer_design_system.md` | Front-end design reference (colors, typography, layout rules) |
+| `AGENTS.md` | Agent rulebook (all project rules in one place) |
+| `INDEX.md` | This file — project state, file manifest, log entries |
+| `CHANGELOG.md` | Archive for INDEX.md log entries once they exceed 10 |
 
-### Backend
-
-| File | Feature | Purpose |
-|------|---------|---------|
-| _(populate as scaffolding is created)_ | | |
-
-### Frontend
+### Styles
 
 | File | Purpose |
 |------|---------|
-| _(populate as scaffolding is created)_ | |
+| `Styles/Theme.xaml` | WPF ResourceDictionary — all design system tokens (colors, brushes, typography, panel/button styles) |
+
+### Services
+
+| File | Feature | Purpose |
+|------|---------|---------|
+| `Services/HardwareMonitorService.cs` | Sensor access | Wraps LibreHardwareMonitorLib `Computer`; `RunSmokeTest()` enumerates hardware/sensors |
 
 ---
 
 ## Architecture Summary
 
 ```
-[fill in once the sensor-backend / display-frontend split is implemented]
+Single-process WPF app (requires admin elevation for sensor access).
+
+  App.xaml.cs          → startup, smoke test trigger
+  MainWindow.xaml      → UI shell (custom chrome, placeholder panels)
+  Styles/Theme.xaml    → design tokens (colors, typography, styles)
+  Services/            → sensor logic (separated from UI per AGENTS.md §4)
 ```
 
 > A full ARCHITECTURE.md is intentionally NOT created at project start — see
@@ -68,14 +84,21 @@
 
 | Variable | Source | Value |
 |----------|--------|-------|
-| _(populate as config is introduced)_ | | |
+| Admin elevation | `app.manifest` | `requireAdministrator` — needed for LibreHardwareMonitorLib kernel drivers |
+| Target framework | `Seer.csproj` | `net8.0-windows` |
+| LibreHardwareMonitorLib | NuGet | `0.9.4` |
 
 ---
 
 ## Running the App
 
 ```bash
-# fill in once scaffolding exists
+# Build
+dotnet build
+
+# Run (requires admin elevation — will trigger UAC prompt)
+dotnet run
+# or launch bin/Debug/net8.0-windows/Seer.exe as Administrator
 ```
 
 ---
@@ -93,4 +116,4 @@
 
 | Date | Agent | Action |
 |------|-------|--------|
-| _(none yet)_ | | |
+| 2026-08-17 | Antigravity | feat: initial project scaffold — .NET 8 WPF project, LibreHardwareMonitorLib smoke test (3 devices/96 sensors on Ryzen 7 5700X3D + RTX 3060), design system ResourceDictionary, placeholder UI shell with custom chrome |
