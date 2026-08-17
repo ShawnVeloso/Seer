@@ -99,9 +99,7 @@ reading any numbers.
   load) use a dense inline bar format:
   `0[||||      16.7%]` — compact, scannable, avoids needing a full chart
   for data that's really just N small numbers.
-- Below the status strip and metric panels, at most one larger trend chart
-  per screen — this is where history/time-series lives. Don't scatter
-  small sparklines everywhere; one clear chart beats six busy ones.
+- Below the status strip and metric panels, the trend section holds up to three compact per-metric charts (CPU / GPU / Memory), each in its own channel color, rather than one overlaid multi-series chart. Chosen over a single overlaid chart because separate per-metric lines stay readable even when values cross frequently — clarity per metric outweighs the space savings of a single chart. Still bounded: three is the ceiling, not a starting point. Don't scatter small sparklines beyond these three, and don't add a fourth without revisiting this section first.
 
 ---
 
