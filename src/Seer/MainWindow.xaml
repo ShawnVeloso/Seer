@@ -164,8 +164,21 @@
                                 BorderBrush="{StaticResource SeerBorder}"
                                 BorderThickness="0,0,0,1"
                                 Padding="8,6">
-                            <TextBlock Text="[1] CPU"
-                                       Style="{StaticResource PanelHeaderStyle}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="[1] CPU"
+                                           Style="{StaticResource PanelHeaderStyle}" />
+                                <TextBlock x:Name="ElevateButton" Grid.Column="1"
+                                           Text="RUN AS ADMIN"
+                                           Style="{StaticResource TagStyle}"
+                                           Foreground="{StaticResource SeerAccentSecondary}"
+                                           Cursor="Hand"
+                                           MouseDown="ElevateButton_Click"
+                                           ToolTip="Relaunch as Administrator to read CPU Thermals/Power" />
+                            </Grid>
                         </Border>
 
                         <!-- Panel content — live values -->

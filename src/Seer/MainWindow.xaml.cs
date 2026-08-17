@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Security.Principal;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -28,6 +30,16 @@ public partial class MainWindow : Window
 
         _normalBrush = (SolidColorBrush)FindResource("SeerText");
         _warningBrush = (SolidColorBrush)FindResource("SeerWarning");
+
+        using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+        {
+            WindowsPrincipal principal = new WindowsPrincipal(identity);
+            if (principal.IsInRole(WindowsBuiltInRole.Administrator))
+            {
+                ElevateButton.Visibility = Visibility.Collapsed;
+                // Optional subtle indicator could go here, or we just hide the button
+            }
+        }
 
         _monitor = new HardwareMonitorService();
         _monitor.Open();
@@ -62,6 +74,29 @@ public partial class MainWindow : Window
         UpdateCpuPanel();
         UpdateMemoryPanel();
         UpdateGpuPanel();
+    }
+
+    private void ElevateButton_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var exeName = Process.GetCurrentProcess().MainModule?.FileName;
+        if (string.IsNullOrEmpty(exeName)) return;
+
+        var startInfo = new ProcessStartInfo(exeName)
+        {
+            UseShellExecute = true,
+            Verb = "runas"
+        };
+
+        try
+        {
+            Process.Start(startInfo);
+            Application.Current.Shutdown();
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // User cancelled the UAC prompt.
+            // Degrade gracefully by doing nothing; stay running non-elevated.
+        }
     }
 
     /// <summary>
