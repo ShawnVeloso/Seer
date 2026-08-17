@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:Seer.Controls">
 
     <!-- ═══════════════════════════════════════════════════════════════
          Seer Design System — WPF Resource Dictionary
@@ -96,6 +97,45 @@
         <Setter Property="BorderBrush" Value="{StaticResource SeerBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="0" />
+    </Style>
+
+    <!-- HudPanel container: adds brackets and hover glow capability to PanelStyle -->
+    <Style TargetType="{x:Type controls:HudPanel}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:HudPanel}">
+                    <Grid>
+                        <!-- Main Border -->
+                        <Border x:Name="MainBorder" 
+                                Background="{StaticResource SeerPanel}" 
+                                BorderBrush="{StaticResource SeerBorder}" 
+                                BorderThickness="1" 
+                                CornerRadius="0">
+                            <Border.Effect>
+                                <DropShadowEffect x:Name="HoverGlow" 
+                                                  Color="{StaticResource BorderActiveColor}" 
+                                                  BlurRadius="12" 
+                                                  ShadowDepth="0" 
+                                                  Opacity="0" />
+                            </Border.Effect>
+                            <ContentPresenter />
+                        </Border>
+
+                        <!-- Corner Brackets -->
+                        <Grid x:Name="BracketGrid">
+                            <!-- Top Left -->
+                            <Path Stroke="{StaticResource SeerBorder}" StrokeThickness="1" Data="M 0,4 L 0,0 L 4,0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-1,-1,0,0" />
+                            <!-- Top Right -->
+                            <Path Stroke="{StaticResource SeerBorder}" StrokeThickness="1" Data="M 0,0 L 4,0 L 4,4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-1,-1,0" />
+                            <!-- Bottom Left -->
+                            <Path Stroke="{StaticResource SeerBorder}" StrokeThickness="1" Data="M 0,-4 L 0,0 L 4,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-1,0,0,-1" />
+                            <!-- Bottom Right -->
+                            <Path Stroke="{StaticResource SeerBorder}" StrokeThickness="1" Data="M -4,0 L 0,0 L 0,-4" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-1,-1" />
+                        </Grid>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- Title bar button style (minimize, maximize, close) -->

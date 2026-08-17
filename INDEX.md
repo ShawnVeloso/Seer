@@ -6,9 +6,9 @@
 ---
 
 ## Current Focus
-- **Working on:** Nothing (merging feature branches into main)
-- **Next up:** Status strip percentage bindings
-- **Then:** System tray integration
+- **Working on:** Nothing (awaiting PR review for HUD Polish)
+- **Next up:** System tray integration
+- **Then:** Settings persistence
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -28,6 +28,7 @@
 | Live GPU Panel | ✅ Complete | Adds Hot Spot and Fan Speed; fits in 2 columns |
 | Trend History Charts | ✅ Complete | 120-second rolling buffer charts for CPU/MEM/GPU Load |
 | Elevation-on-demand | ✅ Complete | Defaults to non-elevated, in-app UX for admin relaunch |
+| HUD Polish | ✅ Complete | Chart glow, panel brackets, background grid, hover states |
 
 ---
 
@@ -127,6 +128,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-17 | Antigravity | feat: add HUD aesthetic polish (chart glow, brackets, grid, hover states) |
 | 2026-08-17 | Antigravity | feat: implement elevation-on-demand default behavior and UI |
 | 2026-08-17 | Antigravity | feat: add live trend history charts for CPU, Memory, GPU |
 | 2026-08-17 | Antigravity | feat: wire live GPU sensor data to UI panel |

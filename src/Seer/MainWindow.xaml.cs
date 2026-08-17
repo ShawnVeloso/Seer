@@ -53,6 +53,38 @@ public partial class MainWindow : Window
 
         // Run an immediate first update so panels don't sit empty for 1s
         UpdatePanels();
+        
+        SetupBackgroundGrid();
+    }
+
+    private void SetupBackgroundGrid()
+    {
+        if (HudConfig.EnableBackgroundGrid)
+        {
+            var borderColor = ((SolidColorBrush)FindResource("SeerBorder")).Color;
+            var faintColor = Color.FromArgb(40, borderColor.R, borderColor.G, borderColor.B);
+            
+            var pen = new Pen(new SolidColorBrush(faintColor), 1.0);
+            pen.Freeze();
+            
+            var geometry = new GeometryGroup();
+            geometry.Children.Add(new LineGeometry(new Point(0, 0), new Point(40, 0)));
+            geometry.Children.Add(new LineGeometry(new Point(0, 0), new Point(0, 40)));
+            geometry.Freeze();
+            
+            var drawing = new GeometryDrawing(null, pen, geometry);
+            drawing.Freeze();
+            
+            var brush = new DrawingBrush(drawing)
+            {
+                Viewport = new Rect(0, 0, 40, 40),
+                ViewportUnits = BrushMappingMode.Absolute,
+                TileMode = TileMode.Tile
+            };
+            brush.Freeze();
+            
+            RootBorder.Background = brush;
+        }
     }
 
     private void PollTimer_Tick(object? sender, EventArgs e)
