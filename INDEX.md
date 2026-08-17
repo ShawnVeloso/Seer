@@ -88,6 +88,8 @@ Single-process WPF app (requires admin elevation for sensor access).
 | Target framework | `src/Seer/Seer.csproj` | `net8.0-windows` |
 | LibreHardwareMonitorLib | NuGet | `0.9.4` |
 
+> **Constraint Note:** Admin elevation (`requireAdministrator`) is a hard requirement. Without it, LibreHardwareMonitorLib cannot access the Ring0/kernel drivers needed to read CPU metrics like Core Temperature, Core Clock speeds, and Package Power (they return `0` or `NaN`), which are primary metrics for the Seer HUD. While GPU and Memory sensors *can* be read without admin, the core CPU telemetry requires it.
+
 ---
 
 ## Running the App
