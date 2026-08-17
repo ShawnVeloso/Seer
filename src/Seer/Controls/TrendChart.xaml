@@ -1,0 +1,29 @@
+<UserControl x:Class="Seer.Controls.TrendChart"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="60" d:DesignWidth="200"
+             SizeChanged="UserControl_SizeChanged">
+    
+    <Border Style="{StaticResource PanelStyle}" Padding="0">
+        <Grid>
+            <!-- Title -->
+            <TextBlock x:Name="ChartTitle" 
+                       Text="CHART" 
+                       Style="{StaticResource TagStyle}" 
+                       Margin="8,6,8,0"
+                       VerticalAlignment="Top" 
+                       HorizontalAlignment="Left"
+                       Panel.ZIndex="1"/>
+                       
+            <!-- Graph Canvas -->
+            <Canvas x:Name="ChartCanvas" ClipToBounds="True" Margin="0,16,0,0">
+                <Polyline x:Name="ChartLine" 
+                          StrokeThickness="1.5"
+                          StrokeLineJoin="Round" />
+            </Canvas>
+        </Grid>
+    </Border>
+</UserControl>

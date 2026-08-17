@@ -6,7 +6,7 @@
 ---
 
 ## Current Focus
-- **Working on:** Nothing (awaiting PR review for live GPU panel)
+- **Working on:** Nothing (awaiting PR review for Trend History Charts)
 - **Next up:** Status strip percentage bindings
 - **Then:** Refactoring or polish
 - **Blocked on:** nothing
@@ -26,6 +26,7 @@
 | Placeholder UI shell | ✅ Complete | Title bar, status strip, 3 panels |
 | Live CPU/Memory Panels | ✅ Complete | Wired to DispatcherTimer; admin fallback logic implemented |
 | Live GPU Panel | ✅ Complete | Adds Hot Spot and Fan Speed; fits in 2 columns |
+| Trend History Charts | ✅ Complete | 120-second rolling buffer charts for CPU/MEM/GPU Load |
 
 ---
 
@@ -126,6 +127,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-17 | Antigravity | feat: add live trend history charts for CPU, Memory, GPU |
 | 2026-08-17 | Antigravity | feat: wire live GPU sensor data to UI panel |
 | 2026-08-17 | Antigravity | feat: wire live CPU and memory sensor data to UI panels |
 | 2026-08-17 | Antigravity | docs: document admin elevation constraint for CPU sensor reads |

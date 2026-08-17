@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -10,6 +11,12 @@ public partial class MainWindow : Window
 {
     private readonly HardwareMonitorService _monitor;
     private readonly DispatcherTimer _pollTimer;
+
+    // History queues for trend charts
+    private readonly Queue<float> _cpuHistory = new();
+    private readonly Queue<float> _memHistory = new();
+    private readonly Queue<float> _gpuHistory = new();
+    private const int MaxHistory = 120;
 
     // Cached brushes from theme resources for elevation-aware display
     private readonly SolidColorBrush _normalBrush;
@@ -39,6 +46,15 @@ public partial class MainWindow : Window
     private void PollTimer_Tick(object? sender, EventArgs e)
     {
         UpdatePanels();
+    }
+
+    private void AddHistory(Queue<float> queue, float value)
+    {
+        queue.Enqueue(value);
+        if (queue.Count > MaxHistory)
+        {
+            queue.Dequeue();
+        }
     }
 
     private void UpdatePanels()
@@ -82,12 +98,17 @@ public partial class MainWindow : Window
             // The status strip track is inside a Grid, so we approximate
             // using a fixed max width matching the column
             UpdateStatusBar(CpuStatusBar, cpu.TotalLoad.Value);
+            
+            AddHistory(_cpuHistory, cpu.TotalLoad.Value);
         }
         else
         {
             CpuLoadValue.Text = "--";
             CpuLoadUnit.Text = " %";
+            
+            AddHistory(_cpuHistory, 0f);
         }
+        CpuChart.UpdateData(_cpuHistory);
 
         // Clock — elevation-gated
         if (cpu.Clock.HasValue)
@@ -141,11 +162,16 @@ public partial class MainWindow : Window
 
             // Update status strip MEM bar
             UpdateStatusBar(MemStatusBar, mem.Load.Value);
+            
+            AddHistory(_memHistory, mem.Load.Value);
         }
         else
         {
             MemLoadValue.Text = "-- %";
+            
+            AddHistory(_memHistory, 0f);
         }
+        MemChart.UpdateData(_memHistory);
 
         if (mem.AvailableGb.HasValue)
         {
@@ -187,13 +213,18 @@ public partial class MainWindow : Window
             GpuLoadValue.Foreground = _normalBrush;
             GpuLoadUnit.Foreground = _normalBrush;
             UpdateStatusBar(GpuStatusBar, gpu.Load.Value);
+            
+            AddHistory(_gpuHistory, gpu.Load.Value);
         }
         else
         {
             GpuLoadValue.Text = "--";
             GpuLoadValue.Foreground = _warningBrush;
             GpuLoadUnit.Foreground = _warningBrush;
+            
+            AddHistory(_gpuHistory, 0f);
         }
+        GpuChart.UpdateData(_gpuHistory);
 
         // Clock
         if (gpu.Clock.HasValue)
