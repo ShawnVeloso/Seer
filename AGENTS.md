@@ -75,6 +75,24 @@ overwriting each other across branches:
 | | Merge to `main` yourself — the lead developer reviews and merges personally. |
 | | Bundle unrelated fixes into an active branch — flag them and ask first (see §5). |
 
+### 3a. Agent Environment Constraints
+
+- **AG cannot self-elevate.** AG's terminal sessions run as standard,
+  non-interactive processes. Windows UAC requires interactive consent on
+  the Secure Desktop to elevate a process — AG cannot accept that prompt,
+  and cannot forcefully bypass it.
+- **Practical effect:** for any feature gated behind `requireAdministrator`
+  (e.g. CPU temperature/clock/power via LibreHardwareMonitorLib's WinRing0
+  driver), AG can write and compile the code, and can test the
+  *non-elevated* path, but cannot verify the actual elevated runtime
+  behavior itself.
+- **Verification rule:** any AG test report for an elevation-gated feature
+  must explicitly state whether the test ran elevated or non-elevated. A
+  report of "tested and works" for such a feature is provisional only —
+  final elevated-runtime verification is the lead developer's
+  responsibility before merge, not AG's self-report, regardless of how
+  confident or detailed AG's non-elevated findings are.
+
 ---
 
 ## 4. Technology & Coding Standards
