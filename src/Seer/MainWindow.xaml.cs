@@ -62,7 +62,8 @@ public partial class MainWindow : Window
         if (HudConfig.EnableBackgroundGrid)
         {
             var borderColor = ((SolidColorBrush)FindResource("SeerBorder")).Color;
-            var faintColor = Color.FromArgb(40, borderColor.R, borderColor.G, borderColor.B);
+            // Use a higher opacity so it's noticeable
+            var faintColor = Color.FromArgb(80, 255, 255, 255);
             
             var pen = new Pen(new SolidColorBrush(faintColor), 1.0);
             pen.Freeze();
