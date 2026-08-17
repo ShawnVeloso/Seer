@@ -204,6 +204,27 @@ public partial class MainWindow : Window
             CpuPowerValue.Foreground = _warningBrush;
             CpuPowerUnit.Foreground = _warningBrush;
         }
+
+        // Per-core Load Bars
+        if (cpu.CoreLoads != null && cpu.CoreLoads.Length > 0)
+        {
+            var coreStrings = new string[cpu.CoreLoads.Length];
+            for (int i = 0; i < cpu.CoreLoads.Length; i++)
+            {
+                var core = cpu.CoreLoads[i];
+                float load = core.Load;
+                int bars = (int)Math.Round(load / 10.0f);
+                bars = Math.Clamp(bars, 0, 10);
+                string barStr = new string('|', bars).PadRight(10);
+                coreStrings[i] = $"{i,2}[{barStr} {load,5:F1}%]";
+            }
+            CpuCoreBarsControl.ItemsSource = coreStrings;
+            CpuCoreBarsControl.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            CpuCoreBarsControl.Visibility = Visibility.Collapsed;
+        }
     }
 
     /// <summary>

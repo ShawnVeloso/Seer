@@ -157,6 +157,7 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
@@ -202,7 +203,7 @@
                         </Border>
 
                         <!-- Panel content — live values -->
-                        <StackPanel Grid.Row="1" Margin="12,10">
+                        <StackPanel Grid.Row="1" Margin="12,10,12,0">
                             <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
                                 <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuTempValue" Text="--" Foreground="{StaticResource SeerWarning}" /><Run x:Name="CpuTempUnit" Text=" °C" Foreground="{StaticResource SeerWarning}" />
                             </TextBlock>
@@ -216,6 +217,20 @@
                                 <Run Text="Power:        " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuPowerValue" Text="--" Foreground="{StaticResource SeerWarning}" /><Run x:Name="CpuPowerUnit" Text=" W" Foreground="{StaticResource SeerWarning}" />
                             </TextBlock>
                         </StackPanel>
+
+                        <!-- Per-core load bars -->
+                        <ItemsControl x:Name="CpuCoreBarsControl" Grid.Row="2" Margin="12,10,12,10">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Style="{StaticResource BaseTextStyle}" Margin="0,0,8,2" Foreground="{StaticResource SeerTextDim}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </Grid>
                 </controls:HudPanel>
 
