@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using System.Text;
 using LibreHardwareMonitor.Hardware;
 using Seer.Models;
@@ -65,6 +66,7 @@ public sealed class HardwareMonitorService : IDisposable
         float? totalLoad = null;
         float? clock = null;
         float? power = null;
+        var coreLoadsList = new List<(string Name, float Load)>();
 
         foreach (IHardware hardware in _computer.Hardware)
         {
@@ -76,9 +78,16 @@ public sealed class HardwareMonitorService : IDisposable
             foreach (ISensor sensor in hardware.Sensors)
             {
                 // CPU Total Load — works without admin
-                if (sensor.SensorType == SensorType.Load && sensor.Name == "CPU Total")
+                if (sensor.SensorType == SensorType.Load)
                 {
-                    totalLoad = sensor.Value;
+                    if (sensor.Name == "CPU Total")
+                    {
+                        totalLoad = sensor.Value;
+                    }
+                    else if (System.Text.RegularExpressions.Regex.IsMatch(sensor.Name, @"Core #\d+") && sensor.Value.HasValue)
+                    {
+                        coreLoadsList.Add((sensor.Name, sensor.Value.Value));
+                    }
                 }
                 // Package power — requires admin (returns 0 without)
                 else if (sensor.SensorType == SensorType.Power && sensor.Name == "Package")
@@ -121,12 +130,18 @@ public sealed class HardwareMonitorService : IDisposable
             break; // Only process first CPU
         }
 
+        var sortedCoreLoads = coreLoadsList
+            .OrderBy(c => c.Name.Length)
+            .ThenBy(c => c.Name)
+            .ToArray();
+
         return new CpuMetrics
         {
             Temperature = temperature,
             TotalLoad = totalLoad,
             Clock = clock,
-            Power = power
+            Power = power,
+            CoreLoads = sortedCoreLoads
         };
     }
 

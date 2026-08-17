@@ -8,7 +8,7 @@
 ## Current Focus
 - **Working on:** System tray integration
 - **Next up:** Settings persistence
-- **Then:** Per-core CPU load breakdown
+- **Then:** Static system-info panel
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -30,6 +30,7 @@
 | Elevation-on-demand | ✅ Complete | Defaults to non-elevated, in-app UX for admin relaunch |
 | HUD Polish | ✅ Complete | Chart glow, panel brackets, background grid, hover states |
 | Status Badge Logic | ✅ Complete | Dynamic NOMINAL/WARNING/CRITICAL badge based on metrics |
+| Per-core CPU load breakdown | ✅ Complete | Added dense inline bar format, neatly packed in a UniformGrid inside the CPU Panel |
 
 ---
 
@@ -129,6 +130,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-17 | Antigravity | feat: wire per-core CPU load breakdown UI using LibreHardwareMonitorLib |
 | 2026-08-17 | Antigravity | feat: wire real NOMINAL/WARNING/CRITICAL logic to status badge based on hardware metrics |
 | 2026-08-17 | Antigravity | feat: add HUD aesthetic polish (chart glow, brackets, grid, hover states) |
 | 2026-08-17 | Antigravity | feat: implement elevation-on-demand default behavior and UI |

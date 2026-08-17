@@ -1,3 +1,5 @@
+using System;
+
 namespace Seer.Models;
 
 /// <summary>
@@ -24,6 +26,9 @@ public record CpuMetrics
 
     /// <summary>CPU package power draw in watts. Requires admin.</summary>
     public float? Power { get; init; }
+
+    /// <summary>Per-core (or per-thread) load percentages, 0-100%.</summary>
+    public (string Name, float Load)[] CoreLoads { get; init; } = Array.Empty<(string, float)>();
 }
 
 /// <summary>
