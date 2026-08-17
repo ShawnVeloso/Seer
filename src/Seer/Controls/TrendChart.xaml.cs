@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 
 namespace Seer.Controls;
 
@@ -19,7 +20,20 @@ public partial class TrendChart : UserControl
     public Brush Stroke
     {
         get => ChartLine.Stroke;
-        set => ChartLine.Stroke = value;
+        set
+        {
+            ChartLine.Stroke = value;
+            if (HudConfig.EnableChartGlow && value is SolidColorBrush solidBrush)
+            {
+                ChartLine.Effect = new DropShadowEffect
+                {
+                    Color = solidBrush.Color,
+                    BlurRadius = 8,
+                    ShadowDepth = 0,
+                    Opacity = 0.8
+                };
+            }
+        }
     }
 
     public TrendChart()

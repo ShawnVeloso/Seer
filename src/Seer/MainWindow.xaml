@@ -19,7 +19,8 @@
                       UseAeroCaptionButtons="False" />
     </WindowChrome.WindowChrome>
 
-    <Border Background="{StaticResource SeerBackground}"
+    <Border x:Name="RootBorder"
+            Background="{StaticResource SeerBackground}"
             BorderBrush="{StaticResource SeerBorder}"
             BorderThickness="1"
             CornerRadius="0">
@@ -152,7 +153,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- [1] CPU Panel -->
-                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource PanelStyle}">
+                <controls:HudPanel Grid.Row="0" Grid.Column="0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -177,7 +178,26 @@
                                            Foreground="{StaticResource SeerAccentSecondary}"
                                            Cursor="Hand"
                                            MouseDown="ElevateButton_Click"
-                                           ToolTip="Relaunch as Administrator to read CPU Thermals/Power" />
+                                           ToolTip="Relaunch as Administrator to read CPU Thermals/Power">
+                                    <TextBlock.Triggers>
+                                        <EventTrigger RoutedEvent="MouseEnter">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                                                    To="{StaticResource BorderActiveColor}" Duration="0:0:0.120" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                        <EventTrigger RoutedEvent="MouseLeave">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                                                    To="{StaticResource AccentSecondaryColor}" Duration="0:0:0.120" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </TextBlock.Triggers>
+                                </TextBlock>
                             </Grid>
                         </Border>
 
@@ -197,10 +217,10 @@
                             </TextBlock>
                         </StackPanel>
                     </Grid>
-                </Border>
+                </controls:HudPanel>
 
-                <!-- [2] MEMORY Panel -->
-                <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource PanelStyle}">
+                <!-- [2] Memory Panel -->
+                <controls:HudPanel Grid.Row="0" Grid.Column="2">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -227,11 +247,10 @@
                             </TextBlock>
                         </StackPanel>
                     </Grid>
-                </Border>
+                </controls:HudPanel>
 
                 <!-- [3] GPU Panel (spans full width on bottom row) -->
-                <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
-                        Style="{StaticResource PanelStyle}">
+                <controls:HudPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -281,7 +300,7 @@
                             </TextBlock>
                         </Grid>
                     </Grid>
-                </Border>
+                </controls:HudPanel>
 
                 <!-- ═══ Trend Charts ═══ -->
                 <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
