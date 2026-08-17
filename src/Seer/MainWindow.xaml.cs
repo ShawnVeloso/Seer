@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Seer.Services;
+using Seer.Models;
 
 namespace Seer;
 
@@ -103,9 +104,74 @@ public partial class MainWindow : Window
 
     private void UpdatePanels()
     {
-        UpdateCpuPanel();
-        UpdateMemoryPanel();
-        UpdateGpuPanel();
+        var cpu = UpdateCpuPanel();
+        var mem = UpdateMemoryPanel();
+        var gpu = UpdateGpuPanel();
+        
+        UpdateStatusBadge(cpu, mem, gpu);
+    }
+
+    private void UpdateStatusBadge(CpuMetrics cpu, MemoryMetrics mem, GpuMetrics gpu)
+    {
+        bool isCritical = false;
+        bool isWarning = false;
+
+        // Check CPU load
+        if (cpu.TotalLoad.HasValue)
+        {
+            if (cpu.TotalLoad.Value >= 95f) isCritical = true;
+            else if (cpu.TotalLoad.Value >= 85f) isWarning = true;
+        }
+        
+        // Check CPU temp (only if available; elevated)
+        if (cpu.Temperature.HasValue)
+        {
+            if (cpu.Temperature.Value >= 85f) isCritical = true;
+            else if (cpu.Temperature.Value >= 75f) isWarning = true;
+        }
+
+        // Check Memory load
+        if (mem.Load.HasValue)
+        {
+            if (mem.Load.Value >= 95f) isCritical = true;
+            else if (mem.Load.Value >= 85f) isWarning = true;
+        }
+
+        // Check GPU load
+        if (gpu.Load.HasValue)
+        {
+            if (gpu.Load.Value >= 95f) isCritical = true;
+            else if (gpu.Load.Value >= 85f) isWarning = true;
+        }
+
+        // Check GPU temp
+        if (gpu.Temperature.HasValue)
+        {
+            if (gpu.Temperature.Value >= 85f) isCritical = true;
+            else if (gpu.Temperature.Value >= 75f) isWarning = true;
+        }
+
+        if (isCritical)
+        {
+            StatusBadgeText.Text = "CRITICAL";
+            StatusBadgeText.Foreground = (SolidColorBrush)FindResource("SeerDanger");
+            StatusBadgeBorder.BorderBrush = (SolidColorBrush)FindResource("SeerDanger");
+            StatusBadgeBorder.Background = new SolidColorBrush(Color.FromArgb(26, 239, 68, 68)); // #1AEF4444 (10% opacity)
+        }
+        else if (isWarning)
+        {
+            StatusBadgeText.Text = "WARNING";
+            StatusBadgeText.Foreground = (SolidColorBrush)FindResource("SeerWarning");
+            StatusBadgeBorder.BorderBrush = (SolidColorBrush)FindResource("SeerWarning");
+            StatusBadgeBorder.Background = new SolidColorBrush(Color.FromArgb(26, 245, 158, 11)); // #1AF59E0B (10% opacity)
+        }
+        else
+        {
+            StatusBadgeText.Text = "NOMINAL";
+            StatusBadgeText.Foreground = (SolidColorBrush)FindResource("SeerSuccess");
+            StatusBadgeBorder.BorderBrush = (SolidColorBrush)FindResource("SeerSuccess");
+            StatusBadgeBorder.Background = new SolidColorBrush(Color.FromArgb(26, 61, 220, 132)); // #1A3DDC84 (10% opacity)
+        }
     }
 
     private void ElevateButton_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -137,7 +203,7 @@ public partial class MainWindow : Window
     /// when the value is unavailable (null = NaN/0 from non-elevated run).
     /// CPU Load works without elevation and always uses normal text color.
     /// </summary>
-    private void UpdateCpuPanel()
+    private CpuMetrics UpdateCpuPanel()
     {
         var cpu = _monitor.GetCpuMetrics();
 
@@ -165,7 +231,6 @@ public partial class MainWindow : Window
             // The status strip track is inside a Grid, so we approximate
             // using a fixed max width matching the column
             UpdateStatusBar(CpuStatusBar, cpu.TotalLoad.Value);
-            
             AddHistory(_cpuHistory, cpu.TotalLoad.Value);
         }
         else
@@ -204,13 +269,15 @@ public partial class MainWindow : Window
             CpuPowerValue.Foreground = _warningBrush;
             CpuPowerUnit.Foreground = _warningBrush;
         }
+
+        return cpu;
     }
 
     /// <summary>
     /// Updates the Memory panel values. All memory sensors work without
     /// admin elevation — no amber fallback needed.
     /// </summary>
-    private void UpdateMemoryPanel()
+    private MemoryMetrics UpdateMemoryPanel()
     {
         var mem = _monitor.GetMemoryMetrics();
 
@@ -229,7 +296,6 @@ public partial class MainWindow : Window
 
             // Update status strip MEM bar
             UpdateStatusBar(MemStatusBar, mem.Load.Value);
-            
             AddHistory(_memHistory, mem.Load.Value);
         }
         else
@@ -248,6 +314,8 @@ public partial class MainWindow : Window
         {
             MemAvailValue.Text = "-- GB";
         }
+
+        return mem;
     }
 
     /// <summary>
@@ -255,7 +323,7 @@ public partial class MainWindow : Window
     /// Adds warning brush fallback for null values, even though GPU sensors 
     /// generally do not require elevation.
     /// </summary>
-    private void UpdateGpuPanel()
+    private GpuMetrics UpdateGpuPanel()
     {
         var gpu = _monitor.GetGpuMetrics();
 
@@ -280,7 +348,6 @@ public partial class MainWindow : Window
             GpuLoadValue.Foreground = _normalBrush;
             GpuLoadUnit.Foreground = _normalBrush;
             UpdateStatusBar(GpuStatusBar, gpu.Load.Value);
-            
             AddHistory(_gpuHistory, gpu.Load.Value);
         }
         else
@@ -355,6 +422,8 @@ public partial class MainWindow : Window
             GpuVramValue.Text = "-- / -- GB";
             GpuVramValue.Foreground = _warningBrush;
         }
+
+        return gpu;
     }
 
     /// <summary>
