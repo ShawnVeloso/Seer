@@ -78,33 +78,35 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- CPU bar placeholder -->
+                    <!-- CPU bar -->
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
                         <TextBlock Text="CPU"
                                    Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
                         <Grid>
                             <Border Style="{StaticResource StatusBarTrackStyle}" />
-                            <Border Background="{StaticResource SeerAccent}"
+                            <Border x:Name="CpuStatusBar"
+                                    Background="{StaticResource SeerAccent}"
                                     Height="4" CornerRadius="0"
                                     HorizontalAlignment="Left"
-                                    Width="60" />
+                                    Width="0" />
                         </Grid>
                     </StackPanel>
 
-                    <!-- MEM bar placeholder -->
+                    <!-- MEM bar -->
                     <StackPanel Grid.Column="1" Margin="0,0,8,0">
                         <TextBlock Text="MEM"
                                    Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
                         <Grid>
                             <Border Style="{StaticResource StatusBarTrackStyle}" />
-                            <Border Background="{StaticResource SeerAccentSecondary}"
+                            <Border x:Name="MemStatusBar"
+                                    Background="{StaticResource SeerAccentSecondary}"
                                     Height="4" CornerRadius="0"
                                     HorizontalAlignment="Left"
-                                    Width="45" />
+                                    Width="0" />
                         </Grid>
                     </StackPanel>
 
-                    <!-- GPU bar placeholder -->
+                    <!-- GPU bar placeholder (static for now) -->
                     <StackPanel Grid.Column="2" Margin="0,0,8,0">
                         <TextBlock Text="GPU"
                                    Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
@@ -162,19 +164,19 @@
                                        Style="{StaticResource PanelHeaderStyle}" />
                         </Border>
 
-                        <!-- Panel content placeholder -->
+                        <!-- Panel content — live values -->
                         <StackPanel Grid.Row="1" Margin="12,10">
                             <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- °C" />
+                                <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuTempValue" Text="--" Foreground="{StaticResource SeerWarning}" /><Run x:Name="CpuTempUnit" Text=" °C" Foreground="{StaticResource SeerWarning}" />
                             </TextBlock>
                             <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- %" />
+                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuLoadValue" Text="--" /><Run x:Name="CpuLoadUnit" Text=" %" />
                             </TextBlock>
                             <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Clock:        " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- MHz" />
+                                <Run Text="Clock:        " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuClockValue" Text="--" Foreground="{StaticResource SeerWarning}" /><Run x:Name="CpuClockUnit" Text=" MHz" Foreground="{StaticResource SeerWarning}" />
                             </TextBlock>
                             <TextBlock Style="{StaticResource BaseTextStyle}">
-                                <Run Text="Power:        " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- W" />
+                                <Run Text="Power:        " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuPowerValue" Text="--" Foreground="{StaticResource SeerWarning}" /><Run x:Name="CpuPowerUnit" Text=" W" Foreground="{StaticResource SeerWarning}" />
                             </TextBlock>
                         </StackPanel>
                     </Grid>
@@ -198,19 +200,19 @@
 
                         <StackPanel Grid.Row="1" Margin="12,10">
                             <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Used:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- / -- GB" />
+                                <Run Text="Used:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="MemUsedValue" Text="-- / -- GB" />
                             </TextBlock>
                             <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- %" />
+                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="MemLoadValue" Text="-- %" />
                             </TextBlock>
                             <TextBlock Style="{StaticResource BaseTextStyle}">
-                                <Run Text="Available:    " Foreground="{StaticResource SeerTextDim}" /><Run Text="-- GB" />
+                                <Run Text="Available:    " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="MemAvailValue" Text="-- GB" />
                             </TextBlock>
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <!-- [3] GPU Panel (spans full width on bottom row) -->
+                <!-- [3] GPU Panel (spans full width on bottom row) — static placeholder for now -->
                 <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
                         Style="{StaticResource PanelStyle}">
                     <Grid>
