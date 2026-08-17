@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Text;
 using LibreHardwareMonitor.Hardware;
+using Seer.Models;
 
 namespace Seer.Services;
 
@@ -50,9 +52,146 @@ public sealed class HardwareMonitorService : IDisposable
     }
 
     /// <summary>
+    /// Returns a snapshot of current CPU sensor readings.
+    /// Fields that require admin elevation (Temperature, Clock, Power)
+    /// will be null when running non-elevated — callers should handle
+    /// this gracefully rather than displaying raw NaN/0 values.
+    /// </summary>
+    public CpuMetrics GetCpuMetrics()
+    {
+        Open();
+
+        float? temperature = null;
+        float? totalLoad = null;
+        float? clock = null;
+        float? power = null;
+
+        foreach (IHardware hardware in _computer.Hardware)
+        {
+            if (hardware.HardwareType != HardwareType.Cpu)
+                continue;
+
+            hardware.Update();
+
+            foreach (ISensor sensor in hardware.Sensors)
+            {
+                // CPU Total Load — works without admin
+                if (sensor.SensorType == SensorType.Load && sensor.Name == "CPU Total")
+                {
+                    totalLoad = sensor.Value;
+                }
+                // Package power — requires admin (returns 0 without)
+                else if (sensor.SensorType == SensorType.Power && sensor.Name == "Package")
+                {
+                    power = NullIfInvalid(sensor.Value);
+                }
+                // First core clock as representative — requires admin (returns NaN without)
+                else if (sensor.SensorType == SensorType.Clock && sensor.Name == "Core #1" && clock == null)
+                {
+                    clock = NullIfInvalid(sensor.Value);
+                }
+            }
+
+            // Temperature lives in sub-hardware on some AMD CPUs,
+            // but on Ryzen it's typically on the main hardware node
+            // as "Core (Tctl/Tdie)"
+            foreach (ISensor sensor in hardware.Sensors)
+            {
+                if (sensor.SensorType == SensorType.Temperature &&
+                    sensor.Name.Contains("Tctl", StringComparison.OrdinalIgnoreCase))
+                {
+                    temperature = NullIfInvalid(sensor.Value);
+                    break;
+                }
+            }
+
+            // Fallback: try any Temperature sensor if Tctl not found
+            if (temperature == null)
+            {
+                foreach (ISensor sensor in hardware.Sensors)
+                {
+                    if (sensor.SensorType == SensorType.Temperature)
+                    {
+                        temperature = NullIfInvalid(sensor.Value);
+                        break;
+                    }
+                }
+            }
+
+            break; // Only process first CPU
+        }
+
+        return new CpuMetrics
+        {
+            Temperature = temperature,
+            TotalLoad = totalLoad,
+            Clock = clock,
+            Power = power
+        };
+    }
+
+    /// <summary>
+    /// Returns a snapshot of current memory sensor readings.
+    /// All fields work without admin elevation.
+    /// </summary>
+    public MemoryMetrics GetMemoryMetrics()
+    {
+        Open();
+
+        float? usedGb = null;
+        float? availableGb = null;
+        float? load = null;
+
+        foreach (IHardware hardware in _computer.Hardware)
+        {
+            if (hardware.HardwareType != HardwareType.Memory)
+                continue;
+
+            hardware.Update();
+
+            foreach (ISensor sensor in hardware.Sensors)
+            {
+                if (sensor.SensorType == SensorType.Load && sensor.Name == "Memory")
+                {
+                    load = sensor.Value;
+                }
+                else if (sensor.SensorType == SensorType.Data && sensor.Name == "Memory Used")
+                {
+                    usedGb = sensor.Value;
+                }
+                else if (sensor.SensorType == SensorType.Data && sensor.Name == "Memory Available")
+                {
+                    availableGb = sensor.Value;
+                }
+            }
+
+            break; // Only one memory device
+        }
+
+        return new MemoryMetrics
+        {
+            UsedGb = usedGb,
+            AvailableGb = availableGb,
+            Load = load
+        };
+    }
+
+    /// <summary>
+    /// Returns null for sensor values that indicate "not available" —
+    /// NaN, 0, or negative. These are the values LibreHardwareMonitorLib
+    /// returns for elevation-gated sensors when running non-elevated.
+    /// </summary>
+    private static float? NullIfInvalid(float? value)
+    {
+        if (value == null || float.IsNaN(value.Value) || value.Value <= 0)
+            return null;
+        return value;
+    }
+
+    /// <summary>
     /// Runs a one-time smoke test: opens the monitor, enumerates all
     /// detected hardware and their sensors, and returns a summary string.
-    /// This is a temporary diagnostic — will be replaced by real polling.
+    /// Kept for future debugging — not used by the live polling path.
     /// </summary>
     public string RunSmokeTest()
     {

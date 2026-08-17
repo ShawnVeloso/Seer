@@ -12,12 +12,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        // ── Sensor smoke test (temporary diagnostic) ──
-        // Runs once on startup to verify LibreHardwareMonitorLib can
-        // detect hardware on this machine. Output goes to Debug trace
-        // and a log file for verification.
-        // This will be removed once real sensor polling is implemented.
-        RunSensorSmokeTest();
+        // RunSensorSmokeTest(); // Preserved for debugging, but disabled for live UI
     }
 
     private static void RunSensorSmokeTest()
