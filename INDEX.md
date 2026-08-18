@@ -133,6 +133,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-18 | Antigravity | fix: use SingleBorderWindow and 8px padding trigger to prevent maximized window taskbar overlap |
 | 2026-08-18 | Antigravity | feat: add static system-info panel (WMI + LHM, collapsible, one-shot fetch at startup) |
 | 2026-08-17 | Antigravity | feat: wire per-core CPU load breakdown UI using LibreHardwareMonitorLib |
 | 2026-08-17 | Antigravity | feat: wire real NOMINAL/WARNING/CRITICAL logic to status badge based on hardware metrics |
@@ -142,4 +143,3 @@ dotnet run --project src/Seer/Seer.csproj
 | 2026-08-17 | Antigravity | feat: wire live GPU sensor data to UI panel |
 | 2026-08-17 | Antigravity | feat: wire live CPU and memory sensor data to UI panels |
 | 2026-08-17 | Antigravity | docs: document admin elevation constraint for CPU sensor reads |
-| 2026-08-17 | Antigravity | feat: initial project scaffold — .NET 8 WPF project, LibreHardwareMonitorLib smoke test (3 devices/96 sensors on Ryzen 7 5700X3D + RTX 3060), design system ResourceDictionary, placeholder UI shell with custom chrome |
