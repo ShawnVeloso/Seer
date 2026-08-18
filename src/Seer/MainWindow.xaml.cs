@@ -38,7 +38,6 @@ public partial class MainWindow : Window
             if (principal.IsInRole(WindowsBuiltInRole.Administrator))
             {
                 ElevateButton.Visibility = Visibility.Collapsed;
-                // Optional subtle indicator could go here, or we just hide the button
             }
         }
 
@@ -54,11 +53,111 @@ public partial class MainWindow : Window
 
         // Run an immediate first update so panels don't sit empty for 1s
         UpdatePanels();
-        
+
         SetupBackgroundGrid();
 
         // Fetch static system info once at startup — not on the polling timer.
         PopulateSystemInfo();
+
+        // --- Settings persistence ---
+        Loaded += MainWindow_Loaded;
+    }
+
+    /// <summary>
+    /// Applies persisted window geometry after the window has been shown
+    /// and measured. Using Loaded (not the constructor) ensures that WPF
+    /// has already applied XAML defaults, so we only override what the
+    /// settings file explicitly provides.
+    /// </summary>
+    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        var settings = SettingsService.Load();
+
+        Width = settings.WindowWidth;
+        Height = settings.WindowHeight;
+
+        // Restore window state (Normal or Maximized; never Minimized).
+        if (Enum.TryParse<WindowState>(settings.WindowState, out var state)
+            && state != WindowState.Minimized)
+        {
+            WindowState = state;
+        }
+
+        // Restore position only if the saved coordinates place the
+        // window at least partially on a currently-connected monitor.
+        if (!double.IsNaN(settings.WindowLeft) && !double.IsNaN(settings.WindowTop)
+            && IsOnScreen(settings.WindowLeft, settings.WindowTop, settings.WindowWidth, settings.WindowHeight))
+        {
+            Left = settings.WindowLeft;
+            Top = settings.WindowTop;
+        }
+        // else: leave WPF's default CenterScreen / system placement.
+    }
+
+    /// <summary>
+    /// Saves current window geometry on close — called from both OnClosing
+    /// and OnClosed as belt-and-suspenders to ensure settings persist
+    /// regardless of how the app exits.
+    /// </summary>
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        SaveWindowSettings();
+        base.OnClosing(e);
+    }
+
+    private void SaveWindowSettings()
+    {
+        var settings = SettingsService.Load();
+
+        if (WindowState == WindowState.Maximized)
+        {
+            // RestoreBounds captures the pre-maximize geometry.
+            settings.WindowWidth = RestoreBounds.Width;
+            settings.WindowHeight = RestoreBounds.Height;
+            settings.WindowLeft = RestoreBounds.Left;
+            settings.WindowTop = RestoreBounds.Top;
+            settings.WindowState = nameof(System.Windows.WindowState.Maximized);
+        }
+        else
+        {
+            settings.WindowWidth = Width;
+            settings.WindowHeight = Height;
+            settings.WindowLeft = Left;
+            settings.WindowTop = Top;
+            settings.WindowState = nameof(System.Windows.WindowState.Normal);
+        }
+
+        SettingsService.Save(settings);
+    }
+
+    /// <summary>
+    /// Returns true if a rectangle at (left, top) with (width, height)
+    /// overlaps at least one currently-connected monitor's work area.
+    /// Prevents launching off-screen after a monitor is unplugged.
+    /// </summary>
+    private static bool IsOnScreen(double left, double top, double width, double height)
+    {
+        // Use a generous margin: as long as 50px of the window is
+        // visible on some monitor, accept it.
+        const double margin = 50;
+        var windowRect = new System.Drawing.Rectangle(
+            (int)left, (int)top, (int)width, (int)height);
+
+        foreach (var screen in System.Windows.Forms.Screen.AllScreens)
+        {
+            var workArea = screen.WorkingArea;
+            // Inflate negatively by margin — window must overlap by
+            // at least 'margin' pixels to count as "on screen".
+            if (windowRect.Right > workArea.Left + margin
+                && windowRect.Left < workArea.Right - margin
+                && windowRect.Bottom > workArea.Top + margin
+                && windowRect.Top < workArea.Bottom - margin)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void SetupBackgroundGrid()
@@ -470,10 +569,12 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        SaveWindowSettings();
         _pollTimer.Stop();
         _monitor.Dispose();
         base.OnClosed(e);
     }
+
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
     {

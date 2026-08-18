@@ -6,9 +6,9 @@
 ---
 
 ## Current Focus
-- **Working on:** System tray integration
-- **Next up:** Settings persistence
-- **Then:** Threshold alerts
+- **Working on:** Nothing — between tasks
+- **Next up:** Threshold alerts (Tier 2)
+- **Then:** Top processes by CPU/RAM
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -32,6 +32,7 @@
 | Status Badge Logic | ✅ Complete | Dynamic NOMINAL/WARNING/CRITICAL badge based on metrics |
 | Per-core CPU load breakdown | ✅ Complete | Added dense inline bar format, neatly packed in a UniformGrid inside the CPU Panel |
 | Static system-info panel | ✅ Complete | Collapsible panel — mobo, BIOS, CPU, RAM, GPU via WMI + LHM; fetched once at startup |
+| Settings persistence | ✅ Complete | Window geometry saved/restored via `%AppData%/Seer/settings.json`; off-screen and corruption fallbacks |
 
 ---
 
@@ -68,6 +69,7 @@
 |------|---------|
 | `src/Seer/Models/SensorSnapshot.cs` | Typed records for sensor readings (`CpuMetrics`, `MemoryMetrics`, `GpuMetrics`), handling nullable/elevation-gated values |
 | `src/Seer/Models/SystemInfo.cs` | Immutable record for static system hardware info (mobo, BIOS, CPU, RAM, GPU) |
+| `src/Seer/Models/AppSettings.cs` | Flat POCO for persisted settings (window geometry; extensible for future OSD/threshold settings) |
 
 ### Services
 
@@ -75,6 +77,7 @@
 |------|---------|---------|
 | `src/Seer/Services/HardwareMonitorService.cs` | Sensor access | Wraps `Computer`; `GetCpuMetrics()`, `GetMemoryMetrics()`, `GetGpuMetrics()`, and smoke test |
 | `src/Seer/Services/SystemInfoService.cs` | Static info | One-shot WMI queries for mobo/BIOS/CPU/RAM; reads GPU name from LHM |
+| `src/Seer/Services/SettingsService.cs` | Settings persistence | Load/Save `AppSettings` to `%AppData%/Seer/settings.json` via `System.Text.Json`; silent fallback on any failure |
 
 ---
 
@@ -133,6 +136,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-18 | Antigravity | feat: settings persistence — window geometry saved/restored via AppSettings + SettingsService; off-screen and corruption fallbacks |
 | 2026-08-18 | Antigravity | fix: use SingleBorderWindow and 8px padding trigger to prevent maximized window taskbar overlap |
 | 2026-08-18 | Antigravity | feat: add static system-info panel (WMI + LHM, collapsible, one-shot fetch at startup) |
 | 2026-08-17 | Antigravity | feat: wire per-core CPU load breakdown UI using LibreHardwareMonitorLib |
@@ -142,4 +146,3 @@ dotnet run --project src/Seer/Seer.csproj
 | 2026-08-17 | Antigravity | feat: add live trend history charts for CPU, Memory, GPU |
 | 2026-08-17 | Antigravity | feat: wire live GPU sensor data to UI panel |
 | 2026-08-17 | Antigravity | feat: wire live CPU and memory sensor data to UI panels |
-| 2026-08-17 | Antigravity | docs: document admin elevation constraint for CPU sensor reads |
