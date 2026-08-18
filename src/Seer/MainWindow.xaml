@@ -5,8 +5,7 @@
         Title="Seer"
         Width="720" Height="520"
         MinWidth="520" MinHeight="400"
-        WindowStyle="None"
-        AllowsTransparency="True"
+        WindowStyle="SingleBorderWindow"
         Background="{StaticResource SeerBackground}"
         ResizeMode="CanResizeWithGrip"
         SnapsToDevicePixels="True"
@@ -28,6 +27,16 @@
             BorderBrush="{StaticResource SeerBorder}"
             BorderThickness="1"
             CornerRadius="0">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="Padding" Value="0" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+                        <Setter Property="Padding" Value="8" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
 
         <Grid>
             <Grid.RowDefinitions>

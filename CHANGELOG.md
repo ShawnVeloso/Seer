@@ -8,4 +8,6 @@
 
 ---
 
-_(empty — nothing archived yet)_
+| Date | Agent | Action |
+|------|-------|--------|
+| 2026-08-17 | Antigravity | feat: initial project scaffold — .NET 8 WPF project, LibreHardwareMonitorLib smoke test (3 devices/96 sensors on Ryzen 7 5700X3D + RTX 3060), design system ResourceDictionary, placeholder UI shell with custom chrome |
