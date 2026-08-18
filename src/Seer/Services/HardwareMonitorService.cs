@@ -17,6 +17,12 @@ public sealed class HardwareMonitorService : IDisposable
     private readonly Computer _computer;
     private bool _isOpen;
 
+    /// <summary>
+    /// The underlying LibreHardwareMonitorLib Computer instance. Exposed read-only
+    /// so that SystemInfoService can read hardware names without duplicating setup.
+    /// </summary>
+    public Computer Computer => _computer;
+
     public HardwareMonitorService()
     {
         _computer = new Computer

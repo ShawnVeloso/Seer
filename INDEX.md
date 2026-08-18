@@ -8,7 +8,7 @@
 ## Current Focus
 - **Working on:** System tray integration
 - **Next up:** Settings persistence
-- **Then:** Static system-info panel
+- **Then:** Threshold alerts
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -31,6 +31,7 @@
 | HUD Polish | ✅ Complete | Chart glow, panel brackets, background grid, hover states |
 | Status Badge Logic | ✅ Complete | Dynamic NOMINAL/WARNING/CRITICAL badge based on metrics |
 | Per-core CPU load breakdown | ✅ Complete | Added dense inline bar format, neatly packed in a UniformGrid inside the CPU Panel |
+| Static system-info panel | ✅ Complete | Collapsible panel — mobo, BIOS, CPU, RAM, GPU via WMI + LHM; fetched once at startup |
 
 ---
 
@@ -66,12 +67,14 @@
 | File | Purpose |
 |------|---------|
 | `src/Seer/Models/SensorSnapshot.cs` | Typed records for sensor readings (`CpuMetrics`, `MemoryMetrics`, `GpuMetrics`), handling nullable/elevation-gated values |
+| `src/Seer/Models/SystemInfo.cs` | Immutable record for static system hardware info (mobo, BIOS, CPU, RAM, GPU) |
 
 ### Services
 
 | File | Feature | Purpose |
 |------|---------|---------|
 | `src/Seer/Services/HardwareMonitorService.cs` | Sensor access | Wraps `Computer`; `GetCpuMetrics()`, `GetMemoryMetrics()`, `GetGpuMetrics()`, and smoke test |
+| `src/Seer/Services/SystemInfoService.cs` | Static info | One-shot WMI queries for mobo/BIOS/CPU/RAM; reads GPU name from LHM |
 
 ---
 
@@ -130,6 +133,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-18 | Antigravity | feat: add static system-info panel (WMI + LHM, collapsible, one-shot fetch at startup) |
 | 2026-08-17 | Antigravity | feat: wire per-core CPU load breakdown UI using LibreHardwareMonitorLib |
 | 2026-08-17 | Antigravity | feat: wire real NOMINAL/WARNING/CRITICAL logic to status badge based on hardware metrics |
 | 2026-08-17 | Antigravity | feat: add HUD aesthetic polish (chart glow, brackets, grid, hover states) |

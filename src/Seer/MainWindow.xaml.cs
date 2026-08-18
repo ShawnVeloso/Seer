@@ -56,6 +56,9 @@ public partial class MainWindow : Window
         UpdatePanels();
         
         SetupBackgroundGrid();
+
+        // Fetch static system info once at startup — not on the polling timer.
+        PopulateSystemInfo();
     }
 
     private void SetupBackgroundGrid()
@@ -487,5 +490,31 @@ public partial class MainWindow : Window
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    /// <summary>
+    /// Fetches static system info via WMI + LHM once and populates the UI.
+    /// Called from the constructor — never from the polling timer.
+    /// </summary>
+    private void PopulateSystemInfo()
+    {
+        var info = SystemInfoService.Collect(_monitor.Computer);
+
+        SysMotherboard.Text = info.MotherboardName;
+        SysBios.Text = $"{info.BiosVersion} ({info.BiosDate})";
+        SysCpu.Text = info.CpuModel;
+        SysCores.Text = $"{info.CpuCores}C / {info.CpuThreads}T";
+        SysRam.Text = info.RamSummary;
+        SysDimmSlots.Text = $"{info.RamSlotsUsed} / {info.RamSlotsTotal}";
+        SysGpu.Text = info.GpuModel;
+    }
+
+    private bool _systemInfoExpanded = false;
+
+    private void SystemInfoHeader_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        _systemInfoExpanded = !_systemInfoExpanded;
+        SystemInfoContent.Visibility = _systemInfoExpanded ? Visibility.Visible : Visibility.Collapsed;
+        SystemInfoHeaderText.Text = _systemInfoExpanded ? "[i] SYSTEM INFO ▾" : "[i] SYSTEM INFO ▸";
     }
 }

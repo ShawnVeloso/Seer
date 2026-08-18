@@ -151,6 +151,8 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="60" /> <!-- Trend Charts -->
+                    <RowDefinition Height="12" /> <!-- Gap -->
+                    <RowDefinition Height="Auto" /> <!-- System Info (collapsed by default) -->
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -337,6 +339,53 @@
                     <controls:TrendChart x:Name="MemChart" Grid.Column="2" Title="MEM LOAD" Stroke="{StaticResource SeerAccentSecondary}" />
                     <controls:TrendChart x:Name="GpuChart" Grid.Column="4" Title="GPU LOAD" Stroke="{StaticResource SeerAccentTertiary}" />
                 </Grid>
+
+                <!-- ═══ System Info Panel (collapsed by default) ═══ -->
+                <controls:HudPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Clickable header -->
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6"
+                                Cursor="Hand"
+                                MouseDown="SystemInfoHeader_Click">
+                            <TextBlock x:Name="SystemInfoHeaderText"
+                                       Text="[i] SYSTEM INFO ▸"
+                                       Style="{StaticResource PanelHeaderStyle}" />
+                        </Border>
+
+                        <!-- Collapsible content -->
+                        <StackPanel x:Name="SystemInfoContent" Grid.Row="1" Margin="12,10" Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Motherboard:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="SysMotherboard" Text="--" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="BIOS:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="SysBios" Text="--" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="CPU:          " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="SysCpu" Text="--" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Cores:        " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="SysCores" Text="--" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="RAM:          " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="SysRam" Text="--" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="DIMM Slots:   " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="SysDimmSlots" Text="--" />
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextStyle}">
+                                <Run Text="GPU:          " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="SysGpu" Text="--" />
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
+                </controls:HudPanel>
             </Grid>
         </Grid>
     </Border>

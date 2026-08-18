@@ -13,7 +13,7 @@
   (`0[||||   16.7%]`). LibreHardwareMonitorLib's CPU sub-hardware already
   exposes per-core sensors (seen in the original smoke test). Mostly a
   UI/layout task, not a new data pipeline.
-- [ ] **Static system-info panel** — motherboard model, BIOS version, RAM
+- [x] **Static system-info panel** — motherboard model, BIOS version, RAM
   speed/timings. Read-once, no polling loop needed, simplest kind of
   panel to build.
 
@@ -60,3 +60,5 @@
 - [x] Trend history charts (120s rolling, CPU/GPU/Memory)
 - [x] Elevation-on-demand (default non-elevated, in-app admin relaunch)
 - [x] HUD polish pass (glow, corner brackets, scan-lines, hover glow)
+- [x] Per-core CPU load breakdown
+- [x] Static system-info panel (WMI + LHM, collapsible, one-shot fetch)
