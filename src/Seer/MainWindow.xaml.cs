@@ -5,6 +5,7 @@ using System.Security.Principal;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using System.Collections.ObjectModel;
 using Seer.Services;
 using Seer.Models;
 
@@ -24,6 +25,10 @@ public partial class MainWindow : Window
     // Cached brushes from theme resources for elevation-aware display
     private readonly SolidColorBrush _normalBrush;
     private readonly SolidColorBrush _warningBrush;
+
+    private readonly ThresholdEvaluator _thresholdEvaluator = new();
+    private readonly ObservableCollection<AlertEvent> _alerts = new();
+    private const int MaxAlerts = 50;
 
     public MainWindow()
     {
@@ -58,6 +63,8 @@ public partial class MainWindow : Window
 
         // Fetch static system info once at startup — not on the polling timer.
         PopulateSystemInfo();
+
+        AlertsList.ItemsSource = _alerts;
 
         // --- Settings persistence ---
         Loaded += MainWindow_Loaded;
@@ -211,57 +218,31 @@ public partial class MainWindow : Window
         var mem = UpdateMemoryPanel();
         var gpu = UpdateGpuPanel();
         
-        UpdateStatusBadge(cpu, mem, gpu);
+        var (overallSeverity, newAlerts) = _thresholdEvaluator.Evaluate(cpu, mem, gpu);
+        
+        foreach (var alert in newAlerts)
+        {
+            _alerts.Insert(0, alert); // Newest at top
+        }
+
+        while (_alerts.Count > MaxAlerts)
+        {
+            _alerts.RemoveAt(_alerts.Count - 1);
+        }
+
+        UpdateStatusBadge(overallSeverity);
     }
 
-    private void UpdateStatusBadge(CpuMetrics cpu, MemoryMetrics mem, GpuMetrics gpu)
+    private void UpdateStatusBadge(AlertSeverity severity)
     {
-        bool isCritical = false;
-        bool isWarning = false;
-
-        // Check CPU load
-        if (cpu.TotalLoad.HasValue)
-        {
-            if (cpu.TotalLoad.Value >= 95f) isCritical = true;
-            else if (cpu.TotalLoad.Value >= 85f) isWarning = true;
-        }
-        
-        // Check CPU temp (only if available; elevated)
-        if (cpu.Temperature.HasValue)
-        {
-            if (cpu.Temperature.Value >= 85f) isCritical = true;
-            else if (cpu.Temperature.Value >= 75f) isWarning = true;
-        }
-
-        // Check Memory load
-        if (mem.Load.HasValue)
-        {
-            if (mem.Load.Value >= 95f) isCritical = true;
-            else if (mem.Load.Value >= 85f) isWarning = true;
-        }
-
-        // Check GPU load
-        if (gpu.Load.HasValue)
-        {
-            if (gpu.Load.Value >= 95f) isCritical = true;
-            else if (gpu.Load.Value >= 85f) isWarning = true;
-        }
-
-        // Check GPU temp
-        if (gpu.Temperature.HasValue)
-        {
-            if (gpu.Temperature.Value >= 85f) isCritical = true;
-            else if (gpu.Temperature.Value >= 75f) isWarning = true;
-        }
-
-        if (isCritical)
+        if (severity == AlertSeverity.Critical)
         {
             StatusBadgeText.Text = "CRITICAL";
             StatusBadgeText.Foreground = (SolidColorBrush)FindResource("SeerDanger");
             StatusBadgeBorder.BorderBrush = (SolidColorBrush)FindResource("SeerDanger");
             StatusBadgeBorder.Background = new SolidColorBrush(Color.FromArgb(26, 239, 68, 68)); // #1AEF4444 (10% opacity)
         }
-        else if (isWarning)
+        else if (severity == AlertSeverity.Warning)
         {
             StatusBadgeText.Text = "WARNING";
             StatusBadgeText.Foreground = (SolidColorBrush)FindResource("SeerWarning");
@@ -610,12 +591,31 @@ public partial class MainWindow : Window
         SysGpu.Text = info.GpuModel;
     }
 
-    private bool _systemInfoExpanded = false;
+    private void AlertsHeader_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (AlertsContent.Visibility == Visibility.Collapsed)
+        {
+            AlertsContent.Visibility = Visibility.Visible;
+            AlertsHeaderText.Text = "[4] ALERTS ▾";
+        }
+        else
+        {
+            AlertsContent.Visibility = Visibility.Collapsed;
+            AlertsHeaderText.Text = "[4] ALERTS ▸";
+        }
+    }
 
     private void SystemInfoHeader_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        _systemInfoExpanded = !_systemInfoExpanded;
-        SystemInfoContent.Visibility = _systemInfoExpanded ? Visibility.Visible : Visibility.Collapsed;
-        SystemInfoHeaderText.Text = _systemInfoExpanded ? "[i] SYSTEM INFO ▾" : "[i] SYSTEM INFO ▸";
+        if (SystemInfoContent.Visibility == Visibility.Collapsed)
+        {
+            SystemInfoContent.Visibility = Visibility.Visible;
+            SystemInfoHeaderText.Text = "[i] SYSTEM INFO ▾";
+        }
+        else
+        {
+            SystemInfoContent.Visibility = Visibility.Collapsed;
+            SystemInfoHeaderText.Text = "[i] SYSTEM INFO ▸";
+        }
     }
 }

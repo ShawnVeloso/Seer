@@ -10,5 +10,6 @@
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-17 | Antigravity | feat: wire live CPU and memory sensor data to UI panels |
 | 2026-08-17 | Antigravity | docs: document admin elevation constraint for CPU sensor reads |
 | 2026-08-17 | Antigravity | feat: initial project scaffold — .NET 8 WPF project, LibreHardwareMonitorLib smoke test (3 devices/96 sensors on Ryzen 7 5700X3D + RTX 3060), design system ResourceDictionary, placeholder UI shell with custom chrome |
