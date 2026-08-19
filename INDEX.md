@@ -6,8 +6,8 @@
 ---
 
 ## Current Focus
-- **Working on:** Top processes by CPU/RAM
-- **Next up:** Disk I/O (read/write speed)
+- **Working on:** Disk I/O (read/write speed)
+- **Next up:** Network I/O
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -34,6 +34,7 @@
 | Settings persistence | ✅ Complete | Window geometry saved/restored via `%AppData%/Seer/settings.json`; off-screen and corruption fallbacks |
 | Threshold alerts | ✅ Complete | Extracted `ThresholdEvaluator` as single source of truth; added session-only Alert Log UI panel |
 | Desktop OSD Overlay | ✅ Complete | Interactive (draggable) and Locked (click-through) modes; system tray lifecycle integration |
+| Top Processes Panel | ✅ Complete | Uses `System.Diagnostics.Process` with graceful admin/access denied fallback |
 
 ---
 
@@ -74,6 +75,7 @@
 | `src/Seer/Models/SystemInfo.cs` | Immutable record for static system hardware info (mobo, BIOS, CPU, RAM, GPU) |
 | `src/Seer/Models/AppSettings.cs` | Flat POCO for persisted settings (window geometry; extensible for future OSD/threshold settings) |
 | `src/Seer/Models/AlertEvent.cs` | Record defining a single alert log entry (`AlertSeverity`, Timestamp, Value, etc.) |
+| `src/Seer/Models/ProcessMetrics.cs` | Lightweight record for process ID, Name, CPU %, and RAM (MB) |
 
 ### Services
 
@@ -83,6 +85,7 @@
 | `src/Seer/Services/SystemInfoService.cs` | Static info | One-shot WMI queries for mobo/BIOS/CPU/RAM; reads GPU name from LHM |
 | `src/Seer/Services/SettingsService.cs` | Settings persistence | Load/Save `AppSettings` to `%AppData%/Seer/settings.json` via `System.Text.Json`; silent fallback on any failure |
 | `src/Seer/Services/ThresholdEvaluator.cs` | Alert generation | Evaluates sensor data against thresholds and detects escalations to WARNING/CRITICAL state |
+| `src/Seer/Services/ProcessMonitorService.cs` | Process tracking | Iterates processes to calculate CPU % over time and read RAM; handles AccessDenied gracefully |
 
 ---
 
@@ -141,6 +144,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-19 | Antigravity | feat: implement top processes by CPU/RAM using System.Diagnostics.Process |
 | 2026-08-19 | Antigravity | feat: Desktop OSD Integration — interactive (draggable) and locked (click-through) modes, AppSettings binding, and system tray lifecycle integration |
 | 2026-08-19 | Antigravity | fix: link OSD window to MainWindow lifecycle and wire live stats to update on polling timer |
 | 2026-08-19 | Antigravity | fix: set ShutdownMode to OnMainWindowClose so hidden OSD window doesn't keep app alive |
@@ -150,4 +154,3 @@ dotnet run --project src/Seer/Seer.csproj
 | 2026-08-18 | Antigravity | fix: use SingleBorderWindow and 8px padding trigger to prevent maximized window taskbar overlap |
 | 2026-08-18 | Antigravity | feat: add static system-info panel (WMI + LHM, collapsible, one-shot fetch at startup) |
 | 2026-08-17 | Antigravity | feat: wire per-core CPU load breakdown UI using LibreHardwareMonitorLib |
-| 2026-08-17 | Antigravity | feat: wire real NOMINAL/WARNING/CRITICAL logic to status badge based on hardware metrics |

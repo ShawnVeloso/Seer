@@ -161,6 +161,8 @@
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="60" /> <!-- Trend Charts -->
                     <RowDefinition Height="12" /> <!-- Gap -->
+                    <RowDefinition Height="Auto" /> <!-- Top Processes -->
+                    <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Alerts -->
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- OSD Settings -->
@@ -353,8 +355,63 @@
                     <controls:TrendChart x:Name="GpuChart" Grid.Column="4" Title="GPU LOAD" Stroke="{StaticResource SeerAccentTertiary}" />
                 </Grid>
 
-                <!-- ═══ Alerts Panel (collapsed by default) ═══ -->
+                <!-- ═══ Top Processes Panel ═══ -->
                 <controls:HudPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6">
+                            <TextBlock Text="[4] TOP PROCESSES"
+                                       Style="{StaticResource PanelHeaderStyle}" />
+                        </Border>
+
+                        <ItemsControl x:Name="TopProcessesControl" Grid.Row="1" Margin="12,10,12,10">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="70" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Name (truncated) -->
+                                        <TextBlock Grid.Column="0" 
+                                                   Text="{Binding Name}" 
+                                                   Style="{StaticResource BaseTextStyle}" 
+                                                   TextTrimming="CharacterEllipsis" 
+                                                   VerticalAlignment="Center" />
+                                                   
+                                        <!-- CPU Bar -->
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                            <TextBlock Text="{Binding CpuBar}" Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
+                                            <TextBlock Text="{Binding CpuPercent, StringFormat={}{0,5:F1}%}" Style="{StaticResource BaseTextStyle}" Width="45" TextAlignment="Right" />
+                                            <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                        </StackPanel>
+                                        
+                                        <!-- RAM Value -->
+                                        <TextBlock Grid.Column="2" 
+                                                   Text="{Binding WorkingSetMb, StringFormat={}{0,5:F0}MB}" 
+                                                   Style="{StaticResource BaseTextStyle}" 
+                                                   Foreground="{StaticResource SeerTextDim}" 
+                                                   TextAlignment="Right" 
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </controls:HudPanel>
+
+                <!-- ═══ Alerts Panel (collapsed by default) ═══ -->
+                <controls:HudPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -429,7 +486,7 @@
                 </controls:HudPanel>
 
                 <!-- ═══ OSD Settings Panel ═══ -->
-                <controls:HudPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -465,7 +522,7 @@
                 </controls:HudPanel>
 
                 <!-- ═══ System Info Panel (collapsed by default) ═══ -->
-                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

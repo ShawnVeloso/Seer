@@ -14,6 +14,7 @@ namespace Seer;
 public partial class MainWindow : Window
 {
     private readonly HardwareMonitorService _monitor;
+    private readonly ProcessMonitorService _processMonitor;
     private readonly DispatcherTimer _pollTimer;
 
     // History queues for trend charts
@@ -54,6 +55,8 @@ public partial class MainWindow : Window
 
         _monitor = new HardwareMonitorService();
         _monitor.Open();
+
+        _processMonitor = new ProcessMonitorService();
 
         _pollTimer = new DispatcherTimer
         {
@@ -344,11 +347,19 @@ public partial class MainWindow : Window
         }
     }
 
+    private void UpdateTopProcessesPanel()
+    {
+        var topProcs = _processMonitor.GetTopProcesses(5);
+        TopProcessesControl.ItemsSource = topProcs;
+    }
+
     private void UpdatePanels()
     {
         var cpu = UpdateCpuPanel();
         var mem = UpdateMemoryPanel();
         var gpu = UpdateGpuPanel();
+
+        UpdateTopProcessesPanel();
         
         _osdWindow?.UpdateStats(cpu, gpu, mem);
         
