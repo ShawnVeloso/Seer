@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private readonly SolidColorBrush _warningBrush;
 
     private readonly ThresholdEvaluator _thresholdEvaluator = new();
+    private AppSettings _appSettings = new();
     private readonly ObservableCollection<AlertEvent> _alerts = new();
     private const int MaxAlerts = 50;
 
@@ -78,13 +79,13 @@ public partial class MainWindow : Window
     /// </summary>
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        var settings = SettingsService.Load();
+        _appSettings = SettingsService.Load();
 
-        Width = settings.WindowWidth;
-        Height = settings.WindowHeight;
+        Width = _appSettings.WindowWidth;
+        Height = _appSettings.WindowHeight;
 
         // Restore window state (Normal or Maximized; never Minimized).
-        if (Enum.TryParse<WindowState>(settings.WindowState, out var state)
+        if (Enum.TryParse<WindowState>(_appSettings.WindowState, out var state)
             && state != WindowState.Minimized)
         {
             WindowState = state;
@@ -92,11 +93,11 @@ public partial class MainWindow : Window
 
         // Restore position only if the saved coordinates place the
         // window at least partially on a currently-connected monitor.
-        if (!double.IsNaN(settings.WindowLeft) && !double.IsNaN(settings.WindowTop)
-            && IsOnScreen(settings.WindowLeft, settings.WindowTop, settings.WindowWidth, settings.WindowHeight))
+        if (!double.IsNaN(_appSettings.WindowLeft) && !double.IsNaN(_appSettings.WindowTop)
+            && IsOnScreen(_appSettings.WindowLeft, _appSettings.WindowTop, _appSettings.WindowWidth, _appSettings.WindowHeight))
         {
-            Left = settings.WindowLeft;
-            Top = settings.WindowTop;
+            Left = _appSettings.WindowLeft;
+            Top = _appSettings.WindowTop;
         }
         // else: leave WPF's default CenterScreen / system placement.
     }
@@ -218,7 +219,7 @@ public partial class MainWindow : Window
         var mem = UpdateMemoryPanel();
         var gpu = UpdateGpuPanel();
         
-        var (overallSeverity, newAlerts) = _thresholdEvaluator.Evaluate(cpu, mem, gpu);
+        var (overallSeverity, newAlerts) = _thresholdEvaluator.Evaluate(cpu, mem, gpu, _appSettings);
         
         foreach (var alert in newAlerts)
         {

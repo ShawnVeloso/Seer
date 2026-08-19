@@ -19,4 +19,11 @@ public class AppSettings
     /// Minimized is never persisted — it would relaunch hidden.
     /// </summary>
     public string WindowState { get; set; } = "Normal";
+
+    // --- Thresholds (Shared by OSD and Alert logic) ---
+    public float LoadWarningThreshold { get; set; } = 85f;
+    public float LoadCriticalThreshold { get; set; } = 95f;
+    
+    public float TempWarningThreshold { get; set; } = 75f;
+    public float TempCriticalThreshold { get; set; } = 85f;
 }
