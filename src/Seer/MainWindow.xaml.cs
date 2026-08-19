@@ -30,6 +30,8 @@ public partial class MainWindow : Window
     private AppSettings _appSettings = new();
     private readonly ObservableCollection<AlertEvent> _alerts = new();
     private const int MaxAlerts = 50;
+    
+    private OsdTestWindow? _osdWindow;
 
     public MainWindow()
     {
@@ -56,6 +58,9 @@ public partial class MainWindow : Window
         };
         _pollTimer.Tick += PollTimer_Tick;
         _pollTimer.Start();
+
+        _osdWindow = new OsdTestWindow();
+        _osdWindow.Show();
 
         // Run an immediate first update so panels don't sit empty for 1s
         UpdatePanels();
@@ -218,6 +223,8 @@ public partial class MainWindow : Window
         var cpu = UpdateCpuPanel();
         var mem = UpdateMemoryPanel();
         var gpu = UpdateGpuPanel();
+        
+        _osdWindow?.UpdateStats(cpu, gpu, mem);
         
         var (overallSeverity, newAlerts) = _thresholdEvaluator.Evaluate(cpu, mem, gpu, _appSettings);
         
@@ -554,6 +561,7 @@ public partial class MainWindow : Window
         SaveWindowSettings();
         _pollTimer.Stop();
         _monitor.Dispose();
+        _osdWindow?.Close();
         base.OnClosed(e);
     }
 

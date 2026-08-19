@@ -11,7 +11,8 @@
         Width="460" Height="36"
         Left="20" Top="20">
     <Border Background="#CC0e0e11" CornerRadius="0" Padding="10,4">
-        <TextBlock Text="SEER OSD SPIKE — CPU: 42% | GPU: 55% | MEM: 61%"
+        <TextBlock x:Name="OsdText"
+                   Text="SEER OSD SPIKE — CPU: --% | GPU: --% | MEM: --%"
                    Foreground="#4dd8ff"
                    FontFamily="JetBrains Mono, Consolas, monospace"
                    FontSize="13"

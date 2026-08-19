@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using Seer.Models;
 
 namespace Seer;
 
@@ -39,5 +40,13 @@ public partial class OsdTestWindow : Window
         int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
         exStyle |= WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW;
         SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
+    }
+
+    public void UpdateStats(CpuMetrics cpu, GpuMetrics gpu, MemoryMetrics mem)
+    {
+        string cpuStr = cpu.TotalLoad.HasValue ? $"{cpu.TotalLoad.Value:F0}%" : "--%";
+        string gpuStr = gpu.Load.HasValue ? $"{gpu.Load.Value:F0}%" : "--%";
+        string memStr = mem.Load.HasValue ? $"{mem.Load.Value:F0}%" : "--%";
+        OsdText.Text = $"SEER OSD SPIKE — CPU: {cpuStr} | GPU: {gpuStr} | MEM: {memStr}";
     }
 }
