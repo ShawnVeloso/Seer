@@ -15,6 +15,7 @@ public partial class MainWindow : Window
 {
     private readonly HardwareMonitorService _monitor;
     private readonly ProcessMonitorService _processMonitor;
+    private readonly DiskMonitorService _diskMonitor;
     private readonly DispatcherTimer _pollTimer;
 
     // History queues for trend charts
@@ -57,6 +58,7 @@ public partial class MainWindow : Window
         _monitor.Open();
 
         _processMonitor = new ProcessMonitorService();
+        _diskMonitor = new DiskMonitorService();
 
         _pollTimer = new DispatcherTimer
         {
@@ -244,6 +246,7 @@ public partial class MainWindow : Window
         }
 
         SaveWindowSettings();
+        _diskMonitor?.Dispose();
         base.OnClosing(e);
     }
 
@@ -353,12 +356,23 @@ public partial class MainWindow : Window
         TopProcessesControl.ItemsSource = topProcs;
     }
 
+    private void UpdateDiskPanel()
+    {
+        var metrics = _diskMonitor.GetMetrics();
+        DiskReadBar.Text = metrics.ReadBar;
+        DiskReadValue.Text = $"{metrics.ReadBytesPerSec / (1024.0 * 1024.0):F1} MB/s";
+        
+        DiskWriteBar.Text = metrics.WriteBar;
+        DiskWriteValue.Text = $"{metrics.WriteBytesPerSec / (1024.0 * 1024.0):F1} MB/s";
+    }
+
     private void UpdatePanels()
     {
         var cpu = UpdateCpuPanel();
         var mem = UpdateMemoryPanel();
         var gpu = UpdateGpuPanel();
 
+        UpdateDiskPanel();
         UpdateTopProcessesPanel();
         
         _osdWindow?.UpdateStats(cpu, gpu, mem);

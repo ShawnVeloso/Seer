@@ -6,8 +6,8 @@
 ---
 
 ## Current Focus
-- **Working on:** Disk I/O (read/write speed)
-- **Next up:** Network I/O
+- **Working on:** Network I/O
+- **Next up:** TBD
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -76,6 +76,7 @@
 | `src/Seer/Models/AppSettings.cs` | Flat POCO for persisted settings (window geometry; extensible for future OSD/threshold settings) |
 | `src/Seer/Models/AlertEvent.cs` | Record defining a single alert log entry (`AlertSeverity`, Timestamp, Value, etc.) |
 | `src/Seer/Models/ProcessMetrics.cs` | Lightweight record for process ID, Name, CPU %, and RAM (MB) |
+| `src/Seer/Models/DiskMetrics.cs` | Lightweight record for disk read/write throughput |
 
 ### Services
 
@@ -86,6 +87,7 @@
 | `src/Seer/Services/SettingsService.cs` | Settings persistence | Load/Save `AppSettings` to `%AppData%/Seer/settings.json` via `System.Text.Json`; silent fallback on any failure |
 | `src/Seer/Services/ThresholdEvaluator.cs` | Alert generation | Evaluates sensor data against thresholds and detects escalations to WARNING/CRITICAL state |
 | `src/Seer/Services/ProcessMonitorService.cs` | Process tracking | Iterates processes to calculate CPU % over time and read RAM; handles AccessDenied gracefully |
+| `src/Seer/Services/DiskMonitorService.cs` | Disk I/O | Uses `PerformanceCounter` to track physical disk read/write throughput |
 
 ---
 
@@ -144,6 +146,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-19 | Antigravity | feat: implement Disk I/O monitoring using System.Diagnostics.PerformanceCounter |
 | 2026-08-19 | Antigravity | feat: implement top processes by CPU/RAM using System.Diagnostics.Process |
 | 2026-08-19 | Antigravity | feat: Desktop OSD Integration — interactive (draggable) and locked (click-through) modes, AppSettings binding, and system tray lifecycle integration |
 | 2026-08-19 | Antigravity | fix: link OSD window to MainWindow lifecycle and wire live stats to update on polling timer |

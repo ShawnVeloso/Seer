@@ -161,6 +161,8 @@
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="60" /> <!-- Trend Charts -->
                     <RowDefinition Height="12" /> <!-- Gap -->
+                    <RowDefinition Height="Auto" /> <!-- Disk I/O -->
+                    <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Top Processes -->
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Alerts -->
@@ -355,7 +357,7 @@
                     <controls:TrendChart x:Name="GpuChart" Grid.Column="4" Title="GPU LOAD" Stroke="{StaticResource SeerAccentTertiary}" />
                 </Grid>
 
-                <!-- ═══ Top Processes Panel ═══ -->
+                <!-- ═══ Disk I/O Panel ═══ -->
                 <controls:HudPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -367,7 +369,59 @@
                                 BorderBrush="{StaticResource SeerBorder}"
                                 BorderThickness="0,0,0,1"
                                 Padding="8,6">
-                            <TextBlock Text="[4] TOP PROCESSES"
+                            <TextBlock Text="[4] DISK I/O"
+                                       Style="{StaticResource PanelHeaderStyle}" />
+                        </Border>
+
+                        <StackPanel Grid.Row="1" Margin="12,10,12,10">
+                            <!-- Read -->
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="80" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Read" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                    <TextBlock x:Name="DiskReadBar" Text="          " Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
+                                    <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" x:Name="DiskReadValue" Text="-- MB/s" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" TextAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                            
+                            <!-- Write -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="80" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Write" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                    <TextBlock x:Name="DiskWriteBar" Text="          " Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
+                                    <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" x:Name="DiskWriteValue" Text="-- MB/s" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" TextAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </controls:HudPanel>
+
+                <!-- ═══ Top Processes Panel ═══ -->
+                <controls:HudPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6">
+                            <TextBlock Text="[5] TOP PROCESSES"
                                        Style="{StaticResource PanelHeaderStyle}" />
                         </Border>
 
@@ -411,7 +465,7 @@
                 </controls:HudPanel>
 
                 <!-- ═══ Alerts Panel (collapsed by default) ═══ -->
-                <controls:HudPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -426,7 +480,7 @@
                                 Cursor="Hand"
                                 MouseDown="AlertsHeader_Click">
                             <TextBlock x:Name="AlertsHeaderText"
-                                       Text="[4] ALERTS ▸"
+                                       Text="[6] ALERTS ▸"
                                        Style="{StaticResource PanelHeaderStyle}" />
                         </Border>
 
@@ -486,7 +540,7 @@
                 </controls:HudPanel>
 
                 <!-- ═══ OSD Settings Panel ═══ -->
-                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -522,7 +576,7 @@
                 </controls:HudPanel>
 
                 <!-- ═══ System Info Panel (collapsed by default) ═══ -->
-                <controls:HudPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
