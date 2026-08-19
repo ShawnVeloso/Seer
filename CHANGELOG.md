@@ -10,6 +10,8 @@
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-18 | Antigravity | feat: add static system-info panel (WMI + LHM, collapsible, one-shot fetch at startup) |
+| 2026-08-17 | Antigravity | feat: wire per-core CPU load breakdown UI using LibreHardwareMonitorLib |
 | 2026-08-17 | Antigravity | feat: wire real NOMINAL/WARNING/CRITICAL logic to status badge based on hardware metrics |
 | 2026-08-17 | Antigravity | feat: add HUD aesthetic polish (chart glow, brackets, grid, hover states) |
 | 2026-08-17 | Antigravity | feat: implement elevation-on-demand default behavior and UI |

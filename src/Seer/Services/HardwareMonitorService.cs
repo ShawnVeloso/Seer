@@ -46,6 +46,8 @@ public sealed class HardwareMonitorService : IDisposable
         }
     }
 
+
+
     /// <summary>
     /// Closes the hardware monitor connection and releases resources.
     /// </summary>
