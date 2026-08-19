@@ -163,6 +163,8 @@
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Alerts -->
                     <RowDefinition Height="12" /> <!-- Gap -->
+                    <RowDefinition Height="Auto" /> <!-- OSD Settings -->
+                    <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- System Info (collapsed by default) -->
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
@@ -426,8 +428,44 @@
                     </Grid>
                 </controls:HudPanel>
 
-                <!-- ═══ System Info Panel (collapsed by default) ═══ -->
+                <!-- ═══ OSD Settings Panel ═══ -->
                 <controls:HudPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6">
+                            <TextBlock Text="[*] DESKTOP OSD"
+                                       Style="{StaticResource PanelHeaderStyle}" />
+                        </Border>
+
+                        <StackPanel Grid.Row="1" Margin="12,10" Orientation="Horizontal">
+                            <CheckBox x:Name="ShowOsdCheckbox" 
+                                      Content="Enable Desktop OSD" 
+                                      Foreground="{StaticResource SeerText}" 
+                                      FontFamily="{StaticResource SeerFontFamily}"
+                                      FontSize="13"
+                                      Margin="0,0,20,0" 
+                                      Checked="OsdCheckbox_Changed" 
+                                      Unchecked="OsdCheckbox_Changed"/>
+                            <CheckBox x:Name="LockOsdCheckbox" 
+                                      Content="Lock OSD Position (Click-through)" 
+                                      Foreground="{StaticResource SeerText}" 
+                                      FontFamily="{StaticResource SeerFontFamily}"
+                                      FontSize="13"
+                                      Checked="OsdCheckbox_Changed" 
+                                      Unchecked="OsdCheckbox_Changed"/>
+                        </StackPanel>
+                    </Grid>
+                </controls:HudPanel>
+
+                <!-- ═══ System Info Panel (collapsed by default) ═══ -->
+                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

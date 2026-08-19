@@ -20,6 +20,12 @@ public class AppSettings
     /// </summary>
     public string WindowState { get; set; } = "Normal";
 
+    // --- OSD Settings ---
+    public bool ShowOsd { get; set; } = false;
+    public bool LockOsd { get; set; } = true;
+    public double OsdX { get; set; } = double.NaN;
+    public double OsdY { get; set; } = double.NaN;
+
     // --- Thresholds (Shared by OSD and Alert logic) ---
     public float LoadWarningThreshold { get; set; } = 85f;
     public float LoadCriticalThreshold { get; set; } = 95f;

@@ -10,6 +10,7 @@
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-17 | Antigravity | feat: add HUD aesthetic polish (chart glow, brackets, grid, hover states) |
 | 2026-08-17 | Antigravity | feat: implement elevation-on-demand default behavior and UI |
 | 2026-08-17 | Antigravity | feat: add live trend history charts for CPU, Memory, GPU |
 | 2026-08-17 | Antigravity | feat: wire live GPU sensor data to UI panel |

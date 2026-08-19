@@ -31,7 +31,10 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<AlertEvent> _alerts = new();
     private const int MaxAlerts = 50;
     
-    private OsdTestWindow? _osdWindow;
+    private OsdWindow? _osdWindow;
+    private System.Windows.Forms.NotifyIcon? _trayIcon;
+    private bool _isExplicitShutdown = false;
+    private bool _isInitializing = true;
 
     public MainWindow()
     {
@@ -59,8 +62,7 @@ public partial class MainWindow : Window
         _pollTimer.Tick += PollTimer_Tick;
         _pollTimer.Start();
 
-        _osdWindow = new OsdTestWindow();
-        _osdWindow.Show();
+        // OsdWindow is now spawned dynamically based on settings in MainWindow_Loaded
 
         // Run an immediate first update so panels don't sit empty for 1s
         UpdatePanels();
@@ -105,15 +107,139 @@ public partial class MainWindow : Window
             Top = _appSettings.WindowTop;
         }
         // else: leave WPF's default CenterScreen / system placement.
+        ShowOsdCheckbox.IsChecked = _appSettings.ShowOsd;
+        LockOsdCheckbox.IsChecked = _appSettings.LockOsd;
+        _isInitializing = false;
+        
+        ApplyOsdSettings();
+        SetupTrayIcon();
+    }
+
+    private void SetupTrayIcon()
+    {
+        var contextMenu = new System.Windows.Forms.ContextMenuStrip();
+        
+        var showItem = new System.Windows.Forms.ToolStripMenuItem("Show Seer");
+        showItem.Click += (s, e) => {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+        };
+        
+        var showOsdItem = new System.Windows.Forms.ToolStripMenuItem("Show OSD");
+        showOsdItem.CheckOnClick = true;
+        showOsdItem.Checked = _appSettings.ShowOsd;
+        showOsdItem.Click += (s, e) => {
+            ShowOsdCheckbox.IsChecked = showOsdItem.Checked;
+        };
+        
+        var lockOsdItem = new System.Windows.Forms.ToolStripMenuItem("Lock OSD Position");
+        lockOsdItem.CheckOnClick = true;
+        lockOsdItem.Checked = _appSettings.LockOsd;
+        lockOsdItem.Click += (s, e) => {
+            LockOsdCheckbox.IsChecked = lockOsdItem.Checked;
+        };
+
+        var exitItem = new System.Windows.Forms.ToolStripMenuItem("Exit");
+        exitItem.Click += (s, e) => {
+            _isExplicitShutdown = true;
+            Application.Current.Shutdown();
+        };
+
+        contextMenu.Items.Add(showItem);
+        contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+        contextMenu.Items.Add(showOsdItem);
+        contextMenu.Items.Add(lockOsdItem);
+        contextMenu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+        contextMenu.Items.Add(exitItem);
+
+        var exePath = Process.GetCurrentProcess().MainModule?.FileName;
+        System.Drawing.Icon? appIcon = null;
+        if (!string.IsNullOrEmpty(exePath))
+        {
+            appIcon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+        }
+
+        _trayIcon = new System.Windows.Forms.NotifyIcon
+        {
+            Icon = appIcon ?? System.Drawing.SystemIcons.Application,
+            Visible = true,
+            Text = "Seer",
+            ContextMenuStrip = contextMenu
+        };
+
+        _trayIcon.DoubleClick += (s, e) => {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+        };
+    }
+
+    private void OsdCheckbox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_isInitializing) return;
+
+        _appSettings.ShowOsd = ShowOsdCheckbox.IsChecked == true;
+        _appSettings.LockOsd = LockOsdCheckbox.IsChecked == true;
+        SettingsService.Save(_appSettings);
+        
+        ApplyOsdSettings();
+        UpdateTrayMenu();
+    }
+
+    private void UpdateTrayMenu()
+    {
+        if (_trayIcon?.ContextMenuStrip == null) return;
+        
+        if (_trayIcon.ContextMenuStrip.Items[2] is System.Windows.Forms.ToolStripMenuItem showItem)
+        {
+            showItem.Checked = _appSettings.ShowOsd;
+        }
+        if (_trayIcon.ContextMenuStrip.Items[3] is System.Windows.Forms.ToolStripMenuItem lockItem)
+        {
+            lockItem.Checked = _appSettings.LockOsd;
+        }
+    }
+
+    private void ApplyOsdSettings()
+    {
+        if (_appSettings.ShowOsd)
+        {
+            if (_osdWindow == null)
+            {
+                _osdWindow = new OsdWindow(_appSettings);
+                _osdWindow.Show();
+                // Send immediate stats
+                _osdWindow.UpdateStats(_monitor.GetCpuMetrics(), _monitor.GetGpuMetrics(), _monitor.GetMemoryMetrics());
+            }
+            else
+            {
+                _osdWindow.ApplyLockState();
+            }
+        }
+        else
+        {
+            if (_osdWindow != null)
+            {
+                _osdWindow.Close();
+                _osdWindow = null;
+            }
+        }
     }
 
     /// <summary>
-    /// Saves current window geometry on close — called from both OnClosing
-    /// and OnClosed as belt-and-suspenders to ensure settings persist
-    /// regardless of how the app exits.
+    /// Minimizes to tray if not explicitly shutting down.
     /// </summary>
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
+        if (!_isExplicitShutdown)
+        {
+            e.Cancel = true;
+            SaveWindowSettings(); // Save layout before hiding
+            Hide();
+            return;
+        }
+
         SaveWindowSettings();
         base.OnClosing(e);
     }
@@ -280,6 +406,7 @@ public partial class MainWindow : Window
         try
         {
             Process.Start(startInfo);
+            _isExplicitShutdown = true;
             Application.Current.Shutdown();
         }
         catch (System.ComponentModel.Win32Exception)
@@ -558,7 +685,11 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
-        SaveWindowSettings();
+        if (_trayIcon != null)
+        {
+            _trayIcon.Visible = false;
+            _trayIcon.Dispose();
+        }
         _pollTimer.Stop();
         _monitor.Dispose();
         _osdWindow?.Close();
