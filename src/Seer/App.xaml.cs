@@ -12,6 +12,9 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // OSD SPIKE: temporarily show the transparent test window
+        new OsdTestWindow().Show();
+
         // RunSensorSmokeTest(); // Preserved for debugging, but disabled for live UI
     }
 

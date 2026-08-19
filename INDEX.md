@@ -6,9 +6,9 @@
 ---
 
 ## Current Focus
-- **Working on:** Nothing — between tasks
-- **Next up:** Desktop OSD Overlay (feasibility spike candidate)
-- **Then:** Top processes by CPU/RAM
+- **Working on:** Desktop OSD Overlay (feasibility spike)
+- **Next up:** Top processes by CPU/RAM
+- **Then:** Disk I/O (read/write speed)
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -140,6 +140,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-19 | Antigravity | feat: OSD feasibility spike — added transparent topmost window with Win32 click-through |
 | 2026-08-18 | Antigravity | feat: threshold alerts — extracted ThresholdEvaluator, added session-only Alert Log UI panel with state-change logging |
 | 2026-08-18 | Antigravity | feat: settings persistence — window geometry saved/restored via AppSettings + SettingsService; off-screen and corruption fallbacks |
 | 2026-08-18 | Antigravity | fix: use SingleBorderWindow and 8px padding trigger to prevent maximized window taskbar overlap |
@@ -149,4 +150,3 @@ dotnet run --project src/Seer/Seer.csproj
 | 2026-08-17 | Antigravity | feat: add HUD aesthetic polish (chart glow, brackets, grid, hover states) |
 | 2026-08-17 | Antigravity | feat: implement elevation-on-demand default behavior and UI |
 | 2026-08-17 | Antigravity | feat: add live trend history charts for CPU, Memory, GPU |
-| 2026-08-17 | Antigravity | feat: wire live GPU sensor data to UI panel |

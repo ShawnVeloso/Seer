@@ -1,0 +1,21 @@
+<Window x:Class="Seer.OsdTestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Seer OSD Spike"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        Width="460" Height="36"
+        Left="20" Top="20">
+    <Border Background="#CC0e0e11" CornerRadius="0" Padding="10,4">
+        <TextBlock Text="SEER OSD SPIKE — CPU: 42% | GPU: 55% | MEM: 61%"
+                   Foreground="#4dd8ff"
+                   FontFamily="JetBrains Mono, Consolas, monospace"
+                   FontSize="13"
+                   FontWeight="Bold"
+                   VerticalAlignment="Center"/>
+    </Border>
+</Window>
