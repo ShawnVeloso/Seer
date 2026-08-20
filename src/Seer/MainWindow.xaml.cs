@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly HardwareMonitorService _monitor;
     private readonly ProcessMonitorService _processMonitor;
     private readonly DiskMonitorService _diskMonitor;
+    private readonly NetworkMonitorService _networkMonitor;
     private readonly DispatcherTimer _pollTimer;
 
     // History queues for trend charts
@@ -36,7 +37,6 @@ public partial class MainWindow : Window
     private OsdWindow? _osdWindow;
     private System.Windows.Forms.NotifyIcon? _trayIcon;
     private bool _isExplicitShutdown = false;
-    private bool _isInitializing = true;
 
     public MainWindow()
     {
@@ -59,6 +59,7 @@ public partial class MainWindow : Window
 
         _processMonitor = new ProcessMonitorService();
         _diskMonitor = new DiskMonitorService();
+        _networkMonitor = new NetworkMonitorService();
 
         _pollTimer = new DispatcherTimer
         {
@@ -112,9 +113,6 @@ public partial class MainWindow : Window
             Top = _appSettings.WindowTop;
         }
         // else: leave WPF's default CenterScreen / system placement.
-        ShowOsdCheckbox.IsChecked = _appSettings.ShowOsd;
-        LockOsdCheckbox.IsChecked = _appSettings.LockOsd;
-        _isInitializing = false;
         
         ApplyOsdSettings();
         SetupTrayIcon();
@@ -135,14 +133,18 @@ public partial class MainWindow : Window
         showOsdItem.CheckOnClick = true;
         showOsdItem.Checked = _appSettings.ShowOsd;
         showOsdItem.Click += (s, e) => {
-            ShowOsdCheckbox.IsChecked = showOsdItem.Checked;
+            _appSettings.ShowOsd = showOsdItem.Checked;
+            SettingsService.Save(_appSettings);
+            ApplyOsdSettings();
         };
         
         var lockOsdItem = new System.Windows.Forms.ToolStripMenuItem("Lock OSD Position");
         lockOsdItem.CheckOnClick = true;
         lockOsdItem.Checked = _appSettings.LockOsd;
         lockOsdItem.Click += (s, e) => {
-            LockOsdCheckbox.IsChecked = lockOsdItem.Checked;
+            _appSettings.LockOsd = lockOsdItem.Checked;
+            SettingsService.Save(_appSettings);
+            ApplyOsdSettings();
         };
 
         var exitItem = new System.Windows.Forms.ToolStripMenuItem("Exit");
@@ -178,32 +180,6 @@ public partial class MainWindow : Window
             WindowState = WindowState.Normal;
             Activate();
         };
-    }
-
-    private void OsdCheckbox_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_isInitializing) return;
-
-        _appSettings.ShowOsd = ShowOsdCheckbox.IsChecked == true;
-        _appSettings.LockOsd = LockOsdCheckbox.IsChecked == true;
-        SettingsService.Save(_appSettings);
-        
-        ApplyOsdSettings();
-        UpdateTrayMenu();
-    }
-
-    private void UpdateTrayMenu()
-    {
-        if (_trayIcon?.ContextMenuStrip == null) return;
-        
-        if (_trayIcon.ContextMenuStrip.Items[2] is System.Windows.Forms.ToolStripMenuItem showItem)
-        {
-            showItem.Checked = _appSettings.ShowOsd;
-        }
-        if (_trayIcon.ContextMenuStrip.Items[3] is System.Windows.Forms.ToolStripMenuItem lockItem)
-        {
-            lockItem.Checked = _appSettings.LockOsd;
-        }
     }
 
     private void ApplyOsdSettings()
@@ -366,6 +342,16 @@ public partial class MainWindow : Window
         DiskWriteValue.Text = $"{metrics.WriteBytesPerSec / (1024.0 * 1024.0):F1} MB/s";
     }
 
+    private void UpdateNetworkPanel()
+    {
+        var metrics = _networkMonitor.GetMetrics();
+        NetDownBar.Text = metrics.DownloadBar;
+        NetDownValue.Text = $"{metrics.DownloadMbps:F1} Mbps";
+        
+        NetUpBar.Text = metrics.UploadBar;
+        NetUpValue.Text = $"{metrics.UploadMbps:F1} Mbps";
+    }
+
     private void UpdatePanels()
     {
         var cpu = UpdateCpuPanel();
@@ -373,6 +359,7 @@ public partial class MainWindow : Window
         var gpu = UpdateGpuPanel();
 
         UpdateDiskPanel();
+        UpdateNetworkPanel();
         UpdateTopProcessesPanel();
         
         _osdWindow?.UpdateStats(cpu, gpu, mem);
@@ -761,12 +748,12 @@ public partial class MainWindow : Window
         if (AlertsContent.Visibility == Visibility.Collapsed)
         {
             AlertsContent.Visibility = Visibility.Visible;
-            AlertsHeaderText.Text = "[4] ALERTS ▾";
+            AlertsHeaderText.Text = "[7] ALERTS ▾";
         }
         else
         {
             AlertsContent.Visibility = Visibility.Collapsed;
-            AlertsHeaderText.Text = "[4] ALERTS ▸";
+            AlertsHeaderText.Text = "[7] ALERTS ▸";
         }
     }
 

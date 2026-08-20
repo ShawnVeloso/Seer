@@ -105,10 +105,10 @@ reading any numbers.
 
 ## Components & UI Patterns
 
-### Status Badge / Tags (pills)
+### Status Badge / Tags
 **Exception to the sharp-corners rule.** Status indicators — system state
-badges (`NOMINAL`/`CRITICAL`), small metadata tags — use full pill
-rounding (`border-radius: 9999px`). This is intentional: a fully round
+badges (`NOMINAL`/`CRITICAL`), small metadata tags — use slight
+rounding (`border-radius: 4px`). This is intentional: a rounded
 shape gives an instant visual cue "this is a state marker," distinct from
 the rectangular grid of data panels around it. Sharp corners stay
 reserved for panels, cards, and containers.
@@ -147,7 +147,7 @@ reserved for panels, cards, and containers.
 
 1. **Never use drop shadows (`box-shadow`)** on panels or cards.
 2. **Panels and cards: `0px` radius, no exceptions.** Only status
-   badges/pills get full rounding — see Components.
+   badges get slight rounding (`4px`) — see Components.
 3. **Monospace only.** `JetBrains Mono` or an equivalent fallback,
    everywhere, no exceptions for body text or headers.
 4. **Use exact hex codes** from the palette above — do not approximate.
@@ -157,6 +157,7 @@ reserved for panels, cards, and containers.
 6. **Minimal density.** If a screen is starting to look like a BI
    dashboard (many small tiles crammed edge-to-edge), that's a signal to
    consolidate, not add more panels.
+7. **WPF Text Rendering.** Always use `TextOptions.TextFormattingMode="Display"` and `TextOptions.TextRenderingMode="ClearType"` at the Window level to prevent text aliasing.
 
 ---
 

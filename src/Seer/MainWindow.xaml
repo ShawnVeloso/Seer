@@ -135,13 +135,13 @@
                         </Grid>
                     </StackPanel>
 
-                    <!-- Status badge (pill — exception to sharp corners rule) -->
+                    <!-- Status badge -->
                     <Border x:Name="StatusBadgeBorder"
                             Grid.Column="3"
                             Background="#1A3DDC84"
                             BorderBrush="{StaticResource SeerSuccess}"
                             BorderThickness="1"
-                            CornerRadius="9999"
+                            CornerRadius="4"
                             Padding="10,2"
                             VerticalAlignment="Center">
                         <TextBlock x:Name="StatusBadgeText"
@@ -161,13 +161,11 @@
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="60" /> <!-- Trend Charts -->
                     <RowDefinition Height="12" /> <!-- Gap -->
-                    <RowDefinition Height="Auto" /> <!-- Disk I/O -->
+                    <RowDefinition Height="Auto" /> <!-- Disk & Network I/O -->
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Top Processes -->
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Alerts -->
-                    <RowDefinition Height="12" /> <!-- Gap -->
-                    <RowDefinition Height="Auto" /> <!-- OSD Settings -->
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- System Info (collapsed by default) -->
                 </Grid.RowDefinitions>
@@ -358,7 +356,7 @@
                 </Grid>
 
                 <!-- ═══ Disk I/O Panel ═══ -->
-                <controls:HudPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel Grid.Row="6" Grid.Column="0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -409,6 +407,58 @@
                     </Grid>
                 </controls:HudPanel>
 
+                <!-- ═══ Network I/O Panel ═══ -->
+                <controls:HudPanel Grid.Row="6" Grid.Column="2">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6">
+                            <TextBlock Text="[5] NETWORK I/O"
+                                       Style="{StaticResource PanelHeaderStyle}" />
+                        </Border>
+
+                        <StackPanel Grid.Row="1" Margin="12,10,12,10">
+                            <!-- Download -->
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="80" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Down" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                    <TextBlock x:Name="NetDownBar" Text="          " Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
+                                    <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" x:Name="NetDownValue" Text="-- Mbps" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" TextAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                            
+                            <!-- Upload -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="80" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Up" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                    <TextBlock x:Name="NetUpBar" Text="          " Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
+                                    <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" x:Name="NetUpValue" Text="-- Mbps" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" TextAlignment="Right" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </controls:HudPanel>
+
                 <!-- ═══ Top Processes Panel ═══ -->
                 <controls:HudPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
@@ -421,7 +471,7 @@
                                 BorderBrush="{StaticResource SeerBorder}"
                                 BorderThickness="0,0,0,1"
                                 Padding="8,6">
-                            <TextBlock Text="[5] TOP PROCESSES"
+                            <TextBlock Text="[6] TOP PROCESSES"
                                        Style="{StaticResource PanelHeaderStyle}" />
                         </Border>
 
@@ -480,7 +530,7 @@
                                 Cursor="Hand"
                                 MouseDown="AlertsHeader_Click">
                             <TextBlock x:Name="AlertsHeaderText"
-                                       Text="[6] ALERTS ▸"
+                                       Text="[7] ALERTS ▸"
                                        Style="{StaticResource PanelHeaderStyle}" />
                         </Border>
 
@@ -539,44 +589,8 @@
                     </Grid>
                 </controls:HudPanel>
 
-                <!-- ═══ OSD Settings Panel ═══ -->
-                <controls:HudPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6">
-                            <TextBlock Text="[*] DESKTOP OSD"
-                                       Style="{StaticResource PanelHeaderStyle}" />
-                        </Border>
-
-                        <StackPanel Grid.Row="1" Margin="12,10" Orientation="Horizontal">
-                            <CheckBox x:Name="ShowOsdCheckbox" 
-                                      Content="Enable Desktop OSD" 
-                                      Foreground="{StaticResource SeerText}" 
-                                      FontFamily="{StaticResource SeerFontFamily}"
-                                      FontSize="13"
-                                      Margin="0,0,20,0" 
-                                      Checked="OsdCheckbox_Changed" 
-                                      Unchecked="OsdCheckbox_Changed"/>
-                            <CheckBox x:Name="LockOsdCheckbox" 
-                                      Content="Lock OSD Position (Click-through)" 
-                                      Foreground="{StaticResource SeerText}" 
-                                      FontFamily="{StaticResource SeerFontFamily}"
-                                      FontSize="13"
-                                      Checked="OsdCheckbox_Changed" 
-                                      Unchecked="OsdCheckbox_Changed"/>
-                        </StackPanel>
-                    </Grid>
-                </controls:HudPanel>
-
                 <!-- ═══ System Info Panel (collapsed by default) ═══ -->
-                <controls:HudPanel Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

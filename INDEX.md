@@ -6,7 +6,7 @@
 ---
 
 ## Current Focus
-- **Working on:** Network I/O
+- **Working on:** TBD (Network I/O complete)
 - **Next up:** TBD
 - **Blocked on:** nothing
 
@@ -77,6 +77,7 @@
 | `src/Seer/Models/AlertEvent.cs` | Record defining a single alert log entry (`AlertSeverity`, Timestamp, Value, etc.) |
 | `src/Seer/Models/ProcessMetrics.cs` | Lightweight record for process ID, Name, CPU %, and RAM (MB) |
 | `src/Seer/Models/DiskMetrics.cs` | Lightweight record for disk read/write throughput |
+| `src/Seer/Models/NetworkMetrics.cs` | Lightweight record for network up/down Mbps throughput |
 
 ### Services
 
@@ -88,6 +89,7 @@
 | `src/Seer/Services/ThresholdEvaluator.cs` | Alert generation | Evaluates sensor data against thresholds and detects escalations to WARNING/CRITICAL state |
 | `src/Seer/Services/ProcessMonitorService.cs` | Process tracking | Iterates processes to calculate CPU % over time and read RAM; handles AccessDenied gracefully |
 | `src/Seer/Services/DiskMonitorService.cs` | Disk I/O | Uses `PerformanceCounter` to track physical disk read/write throughput |
+| `src/Seer/Services/NetworkMonitorService.cs` | Network I/O | Calculates active Mbps throughput (up/down) via `NetworkInterface` |
 
 ---
 
@@ -146,6 +148,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-19 | Antigravity | feat: implement network throughput (up/down Mbps) polling using NetworkInterface |
 | 2026-08-19 | Antigravity | feat: implement Disk I/O monitoring using System.Diagnostics.PerformanceCounter |
 | 2026-08-19 | Antigravity | feat: implement top processes by CPU/RAM using System.Diagnostics.Process |
 | 2026-08-19 | Antigravity | feat: Desktop OSD Integration — interactive (draggable) and locked (click-through) modes, AppSettings binding, and system tray lifecycle integration |
@@ -155,5 +158,3 @@ dotnet run --project src/Seer/Seer.csproj
 | 2026-08-18 | Antigravity | feat: threshold alerts — extracted ThresholdEvaluator, added session-only Alert Log UI panel with state-change logging |
 | 2026-08-18 | Antigravity | feat: settings persistence — window geometry saved/restored via AppSettings + SettingsService; off-screen and corruption fallbacks |
 | 2026-08-18 | Antigravity | fix: use SingleBorderWindow and 8px padding trigger to prevent maximized window taskbar overlap |
-| 2026-08-18 | Antigravity | feat: add static system-info panel (WMI + LHM, collapsible, one-shot fetch at startup) |
-| 2026-08-17 | Antigravity | feat: wire per-core CPU load breakdown UI using LibreHardwareMonitorLib |
