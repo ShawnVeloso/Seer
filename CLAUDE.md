@@ -148,7 +148,17 @@ content off-screen with `RenderTargetBitmap` — that also proves every
   cadence and publishes an immutable snapshot, the UI reads it on its tick.
 - **Adding a panel** means editing `MainWindow.xaml`'s outer grid, where
   panels sit on even rows and 12px gaps on odd ones. Inserting one shifts
-  every `Grid.Row` below it.
+  every `Grid.Row` below it, and the `[n]` header numbers read sequentially
+  top-to-bottom, so moving a panel means renumbering (the Alerts label is
+  also rebuilt in code-behind — update both). The grid sits inside a
+  `ScrollViewer` and every panel row is `Auto`, so panels ask for the
+  height they need and the area scrolls; a new panel can't squeeze an
+  existing one.
+- **Never put a `UniformGrid`, or anything that divides space equally, in a
+  `*` row.** It takes whatever height it's handed and never asks for more,
+  so when space runs short its children silently *overlap* rather than
+  clip or scroll — exactly how the per-core bars broke. Use a `WrapPanel`
+  in an `Auto` row when items should keep their natural size.
 - **Prefer BCL over new packages.** Only 3 deps exist; adding one needs the
   lead developer's OK (AGENTS.md §3).
 

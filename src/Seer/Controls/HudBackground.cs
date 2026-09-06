@@ -9,7 +9,17 @@ namespace Seer.Controls;
 /// </summary>
 public static class HudBackground
 {
-    private const double CellSize = 40;
+    /// <summary>Spacing between gridlines. Wider reads calmer.</summary>
+    private const double CellSize = 48;
+
+    /// <summary>
+    /// Gridline opacity. The line is drawn in the design system's border
+    /// colour rather than white: white over a near-black background
+    /// reads as grey haze and competes with the readouts, whereas the
+    /// hairline colour used on every panel edge reads as part of the
+    /// same structure. Lower this to quieten it further.
+    /// </summary>
+    private const byte LineAlpha = 180;
 
     /// <summary>
     /// Builds the tiling grid brush, or returns null when the effect is
@@ -21,7 +31,8 @@ public static class HudBackground
         if (!HudConfig.EnableBackgroundGrid)
             return null;
 
-        var pen = new Pen(new SolidColorBrush(Color.FromArgb(80, 255, 255, 255)), 1.0);
+        // #2A2A2E — the SeerBorder token, matching every panel hairline.
+        var pen = new Pen(new SolidColorBrush(Color.FromArgb(LineAlpha, 0x2A, 0x2A, 0x2E)), 1.0);
         pen.Freeze();
 
         // One cell's worth of lines — top edge and left edge — tiled.

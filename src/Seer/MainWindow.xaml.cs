@@ -413,12 +413,12 @@ public partial class MainWindow : Window
         if (AlertsContent.Visibility == Visibility.Collapsed)
         {
             AlertsContent.Visibility = Visibility.Visible;
-            AlertsHeaderText.Text = "[7] ALERTS ▾";
+            AlertsHeaderText.Text = "[8] ALERTS ▾";
         }
         else
         {
             AlertsContent.Visibility = Visibility.Collapsed;
-            AlertsHeaderText.Text = "[7] ALERTS ▸";
+            AlertsHeaderText.Text = "[8] ALERTS ▸";
         }
     }
 

@@ -6,7 +6,7 @@
 ---
 
 ## Current Focus
-- **Working on:** ping/latency panel — complete. Tiers 1–3 are now all shipped.
+- **Working on:** panel layout overflow fix — complete
 - **Next up:** Tier 4 only — fan speeds beyond GPU, motherboard/VRM temps,
   disk SMART. Each is hardware-dependent and needs a feasibility smoke test
   before any UI work is committed to.
@@ -41,6 +41,7 @@
 | Settings window | ✅ Complete | Editable load/temp thresholds + start-with-Windows; validated, applies without restart |
 | Configurable readouts | ✅ Complete | Metrics as taskbar tray icons and in the OSD strip, chosen per surface; severity-coloured |
 | Ping / latency panel | ✅ Complete | Start/stop control; latency, average, jitter, packet loss. Only component that sends traffic |
+| Scrollable panel layout | ✅ Complete | Panel rows size to content inside a styled `ScrollViewer`; per-core bars reflow via `WrapPanel` |
 | Unit tests | ✅ Started | `tests/Seer.Tests` — 19 tests over `ThresholdEvaluator` (the only pure-logic component) |
 
 ---
@@ -192,6 +193,7 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-06 | Claude | fix: panel layout overflow — scrollable panel area with content-sized rows, per-core bars reflow instead of overlapping, ping moved to third-from-last, softer background grid |
 | 2026-09-06 | Claude | feat: ping/latency panel with start-stop control — background loop, latency/average/jitter/loss; closes the last Tier 3 item |
 | 2026-09-06 | Claude | feat: configurable readouts — metrics as taskbar tray icons (Afterburner style) and a metric-driven OSD strip, both toggled from the tray menu |
 | 2026-09-06 | Claude | feat: settings window — editable alert thresholds and start-with-Windows, reachable from the title bar and tray; adds Seer.Tests with 19 ThresholdEvaluator tests |
@@ -201,4 +203,3 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 | 2026-09-06 | Claude | docs: add CLAUDE.md working notes (distilled map/conventions + when to read the longer docs) |
 | 2026-08-19 | Antigravity | feat: implement network throughput (up/down Mbps) polling using NetworkInterface |
 | 2026-08-19 | Antigravity | feat: implement Disk I/O monitoring using System.Diagnostics.PerformanceCounter |
-| 2026-08-19 | Antigravity | feat: implement top processes by CPU/RAM using System.Diagnostics.Process |

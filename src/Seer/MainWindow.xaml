@@ -5,7 +5,7 @@
         Title="Seer"
         Icon="Assets/seer.ico"
         Width="720" Height="520"
-        MinWidth="520" MinHeight="400"
+        MinWidth="640" MinHeight="400"
         WindowStyle="SingleBorderWindow"
         Background="{StaticResource SeerBackground}"
         ResizeMode="CanResizeWithGrip"
@@ -191,19 +191,28 @@
             </Border>
 
             <!-- ═══ Main Panels ═══ -->
-            <Grid Grid.Row="2" Margin="12">
+            <!-- The panel stack is taller than the window once every
+                 panel is expanded, so it scrolls. Panels below size to
+                 their content (Auto rows) rather than sharing leftover
+                 space, which is what previously crushed the CPU panel. -->
+            <ScrollViewer Grid.Row="2"
+                          Margin="12"
+                          Style="{StaticResource SeerScrollViewerStyle}"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+            <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="12" /> <!-- Gap -->
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="60" /> <!-- Trend Charts -->
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Disk & Network I/O -->
                     <RowDefinition Height="12" /> <!-- Gap -->
-                    <RowDefinition Height="Auto" /> <!-- Ping -->
-                    <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Top Processes -->
+                    <RowDefinition Height="12" /> <!-- Gap -->
+                    <RowDefinition Height="Auto" /> <!-- Ping -->
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Alerts -->
                     <RowDefinition Height="12" /> <!-- Gap -->
@@ -221,7 +230,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <!-- Panel header -->
@@ -282,15 +291,27 @@
                         </StackPanel>
 
                         <!-- Per-core load bars -->
+                        <!-- Per-core load bars.
+                             A WrapPanel, not a UniformGrid: a UniformGrid
+                             splits whatever height it is handed equally
+                             between its rows and never asks for more, so
+                             in a short row the lines overlap. These items
+                             keep their natural size and reflow instead —
+                             four across at normal width, fewer when the
+                             window is narrowed. -->
                         <ItemsControl x:Name="CpuCoreBarsControl" Grid.Row="2" Margin="12,10,12,10">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <UniformGrid Columns="2" />
+                                    <WrapPanel Orientation="Horizontal" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding}" Style="{StaticResource BaseTextStyle}" Margin="0,0,8,2" Foreground="{StaticResource SeerTextDim}" />
+                                    <TextBlock Text="{Binding}"
+                                               Style="{StaticResource BaseTextStyle}"
+                                               FontSize="12"
+                                               Margin="0,0,6,2"
+                                               Foreground="{StaticResource SeerTextDim}" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -499,8 +520,63 @@
                     </Grid>
                 </controls:HudPanel>
 
-                <!-- ═══ Ping / Latency Panel ═══ -->
+                <!-- ═══ Top Processes Panel ═══ -->
                 <controls:HudPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6">
+                            <TextBlock Text="[6] TOP PROCESSES"
+                                       Style="{StaticResource PanelHeaderStyle}" />
+                        </Border>
+
+                        <ItemsControl x:Name="TopProcessesControl" Grid.Row="1" Margin="12,10,12,10">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="70" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Name (truncated) -->
+                                        <TextBlock Grid.Column="0" 
+                                                   Text="{Binding Name}" 
+                                                   Style="{StaticResource BaseTextStyle}" 
+                                                   TextTrimming="CharacterEllipsis" 
+                                                   VerticalAlignment="Center" />
+                                                   
+                                        <!-- CPU Bar -->
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                            <TextBlock Text="{Binding CpuBar}" Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
+                                            <TextBlock Text="{Binding CpuPercent, StringFormat={}{0,5:F1}%}" Style="{StaticResource BaseTextStyle}" Width="45" TextAlignment="Right" />
+                                            <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                        </StackPanel>
+                                        
+                                        <!-- RAM Value -->
+                                        <TextBlock Grid.Column="2" 
+                                                   Text="{Binding WorkingSetMb, StringFormat={}{0,5:F0}MB}" 
+                                                   Style="{StaticResource BaseTextStyle}" 
+                                                   Foreground="{StaticResource SeerTextDim}" 
+                                                   TextAlignment="Right" 
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </controls:HudPanel>
+
+                <!-- ═══ Ping / Latency Panel ═══ -->
+                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -518,7 +594,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <TextBlock Grid.Column="0" Text="[8] PING"
+                                <TextBlock Grid.Column="0" Text="[7] PING"
                                            Style="{StaticResource PanelHeaderStyle}"
                                            VerticalAlignment="Center" />
 
@@ -585,61 +661,6 @@
                     </Grid>
                 </controls:HudPanel>
 
-                <!-- ═══ Top Processes Panel ═══ -->
-                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6">
-                            <TextBlock Text="[6] TOP PROCESSES"
-                                       Style="{StaticResource PanelHeaderStyle}" />
-                        </Border>
-
-                        <ItemsControl x:Name="TopProcessesControl" Grid.Row="1" Margin="12,10,12,10">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,0,0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="100" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="70" />
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <!-- Name (truncated) -->
-                                        <TextBlock Grid.Column="0" 
-                                                   Text="{Binding Name}" 
-                                                   Style="{StaticResource BaseTextStyle}" 
-                                                   TextTrimming="CharacterEllipsis" 
-                                                   VerticalAlignment="Center" />
-                                                   
-                                        <!-- CPU Bar -->
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
-                                            <TextBlock Text="{Binding CpuBar}" Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
-                                            <TextBlock Text="{Binding CpuPercent, StringFormat={}{0,5:F1}%}" Style="{StaticResource BaseTextStyle}" Width="45" TextAlignment="Right" />
-                                            <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
-                                        </StackPanel>
-                                        
-                                        <!-- RAM Value -->
-                                        <TextBlock Grid.Column="2" 
-                                                   Text="{Binding WorkingSetMb, StringFormat={}{0,5:F0}MB}" 
-                                                   Style="{StaticResource BaseTextStyle}" 
-                                                   Foreground="{StaticResource SeerTextDim}" 
-                                                   TextAlignment="Right" 
-                                                   VerticalAlignment="Center" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </controls:HudPanel>
-
                 <!-- ═══ Alerts Panel (collapsed by default) ═══ -->
                 <controls:HudPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
@@ -656,7 +677,7 @@
                                 Cursor="Hand"
                                 MouseDown="AlertsHeader_Click">
                             <TextBlock x:Name="AlertsHeaderText"
-                                       Text="[7] ALERTS ▸"
+                                       Text="[8] ALERTS ▸"
                                        Style="{StaticResource PanelHeaderStyle}" />
                         </Border>
 
@@ -762,6 +783,7 @@
                     </Grid>
                 </controls:HudPanel>
             </Grid>
+            </ScrollViewer>
         </Grid>
     </Border>
 </Window>
