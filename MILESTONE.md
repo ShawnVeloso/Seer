@@ -19,15 +19,33 @@
 
 ## Tier 2 — Medium effort (new logic, same data source)
 
-- [ ] **Threshold alerts** — builds directly on the NOMINAL/CRITICAL work
-  above; adds a lightweight alert/log of when a metric crossed a
-  threshold. Depends on Tier 1's badge logic existing first.
-- [ ] **Top processes by CPU/RAM** — new data source (`System.Diagnostics.
-  Process` enumeration, not LibreHardwareMonitorLib), but conceptually
-  simple: poll, sort, display top N. No new external dependencies.
-- [ ] **Disk I/O (read/write speed)** — LibreHardwareMonitorLib may already
-  expose this via its Storage hardware type (needs confirming against a
-  fresh smoke test) — if so, closer to Tier 1; if not, bump to Tier 3.
+- [x] **Threshold alerts** — shipped as `ThresholdEvaluator` plus a
+  session-only Alert Log panel.
+- [x] **Top processes by CPU/RAM** — shipped via `System.Diagnostics.Process`
+  enumeration with an access-denied fallback.
+- [x] **Disk I/O (read/write speed)** — shipped, but *not* via
+  LibreHardwareMonitorLib's Storage type as speculated here: it uses
+  `System.Diagnostics.PerformanceCounter` against PhysicalDisk instead.
+
+## Tier 2b — Agreed, not yet started
+
+- [ ] **Split `MainWindow.xaml.cs`** — 770+ lines carrying window chrome,
+  the poll loop, six panel updaters, tray lifecycle, OSD and settings.
+  Violates AGENTS.md §4. Blocks the two items below, which would
+  otherwise add more code to it.
+- [ ] **Editable thresholds** — `AppSettings` already persists warning and
+  critical values for load and temp, but nothing in the UI reaches them;
+  they can only be changed by hand-editing settings.json.
+- [ ] **Start with Windows** — standard expectation for an always-on tray
+  tool.
+- [ ] **Configurable readouts** — temps and other metrics shown as taskbar
+  tray icons (MSI Afterburner style) and as a Seer-styled overlay strip,
+  each an optional toggle in the tray right-click menu, with a choice of
+  which metrics appear.
+- [ ] **Unit tests for `ThresholdEvaluator`** — pure logic, no WPF or
+  hardware; currently the severity/escalation rules can only be checked
+  by heating the machine up. Worth having before thresholds become
+  user-editable.
 
 ## Tier 3 — Medium-high effort (new domain: networking)
 
@@ -35,9 +53,8 @@
   (`System.Net.NetworkInformation.Ping`), needs async task management and
   a start/stop UI state — no prior branch has built a user-toggleable
   background process before.
-- [ ] **Network throughput (up/down Mbps)** — needs NIC byte counters sampled
-  over time (delta between polls), a new sensor-reading pattern distinct
-  from LibreHardwareMonitorLib's snapshot-style values.
+- [x] **Network throughput (up/down Mbps)** — shipped; `NetworkInterface`
+  byte counters sampled between polls, as anticipated.
 
 ## Tier 4 — Higher effort / hardware-dependent (may not be reliably available)
 
@@ -62,3 +79,11 @@
 - [x] HUD polish pass (glow, corner brackets, scan-lines, hover glow)
 - [x] Per-core CPU load breakdown
 - [x] Static system-info panel (WMI + LHM, collapsible, one-shot fetch)
+- [x] Settings persistence (window geometry, `%AppData%/Seer/settings.json`)
+- [x] Threshold alerts (`ThresholdEvaluator` + session Alert Log panel)
+- [x] Desktop OSD overlay (draggable / click-through, tray lifecycle)
+- [x] Top processes by CPU / RAM
+- [x] Disk I/O throughput (PerformanceCounter)
+- [x] Network throughput up / down (NetworkInterface)
+- [x] Tester packaging (single-file self-contained build, icon, versioning,
+  crash logs to `%AppData%`)
