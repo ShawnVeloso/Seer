@@ -129,10 +129,16 @@ public partial class MainWindow
             {
                 var core = cpu.CoreLoads[i];
                 float load = core.Load;
-                int bars = (int)Math.Round(load / 10.0f);
-                bars = Math.Clamp(bars, 0, 10);
-                string barStr = new string('|', bars).PadRight(10);
-                coreStrings[i] = $"{i,2}[{barStr} {load,5:F1}%]";
+
+                // Five segments and a whole-number percentage keep every
+                // cell exactly 13 characters wide, which is what lets
+                // four sit side by side in a half-width panel. The old
+                // 21-character form only ever fitted two, and overflowed
+                // below about 800px of window width.
+                int bars = (int)Math.Round(load / 20.0f);
+                bars = Math.Clamp(bars, 0, 5);
+                string barStr = new string('|', bars).PadRight(5);
+                coreStrings[i] = $"{i,2}[{barStr}{load,3:F0}%]";
             }
             CpuCoreBarsControl.ItemsSource = coreStrings;
             CpuCoreBarsControl.Visibility = Visibility.Visible;
