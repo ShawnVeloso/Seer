@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Documents;
 using System.Windows.Media;
 using Seer.Models;
 using Seer.Services;
@@ -97,17 +98,55 @@ public partial class OsdWindow : Window
         SettingsService.Save(_settings);
     }
 
+    /// <summary>
+    /// Rebuilds the strip from whichever metrics the user selected.
+    ///
+    /// Previously this was a fixed CPU/GPU/RAM line. It now renders one
+    /// run per metric so each can be coloured by its own severity — a
+    /// single TextBlock could only ever be one colour, which meant a
+    /// critical GPU temperature looked exactly like an idle one.
+    /// </summary>
     public void UpdateStats(CpuMetrics cpu, GpuMetrics gpu, MemoryMetrics mem)
     {
-        string cpuLoad = cpu.TotalLoad.HasValue ? $"{cpu.TotalLoad.Value:F0}%" : "--%";
-        string cpuTemp = cpu.Temperature.HasValue ? $"{cpu.Temperature.Value:F0}°C" : "--°C";
-        
-        string gpuLoad = gpu.Load.HasValue ? $"{gpu.Load.Value:F0}%" : "--%";
-        string gpuTemp = gpu.Temperature.HasValue ? $"{gpu.Temperature.Value:F0}°C" : "--°C";
-        
-        string memUsed = mem.UsedGb.HasValue ? $"{mem.UsedGb.Value:F1}GB" : "--GB";
-        string memTot = mem.TotalGb.HasValue ? $"{mem.TotalGb.Value:F1}GB" : "--GB";
-        
-        OsdText.Text = $"CPU: {cpuLoad} [{cpuTemp}] | GPU: {gpuLoad} [{gpuTemp}] | RAM: {memUsed}/{memTot}";
+        var readings = ReadoutFormatter.ReadAll(_settings.OsdMetrics, cpu, mem, gpu, _settings);
+
+        OsdText.Inlines.Clear();
+
+        if (readings.Count == 0)
+        {
+            OsdText.Inlines.Add(new Run("SEER") { Foreground = SeverityBrush(AlertSeverity.Nominal) });
+            return;
+        }
+
+        for (var i = 0; i < readings.Count; i++)
+        {
+            if (i > 0)
+                OsdText.Inlines.Add(new Run("  |  ") { Foreground = DimBrush });
+
+            OsdText.Inlines.Add(new Run(readings[i].Full)
+            {
+                Foreground = SeverityBrush(readings[i].Severity)
+            });
+        }
     }
+
+    // Frozen brushes: rebuilt every poll otherwise, for no benefit.
+    private static readonly SolidColorBrush NominalBrush = Frozen(0xC9, 0xC9, 0xCE);  // --text
+    private static readonly SolidColorBrush WarningBrush = Frozen(0xFF, 0xB0, 0x20);  // --warning
+    private static readonly SolidColorBrush DangerBrush  = Frozen(0xFF, 0x5C, 0x5C);  // --danger
+    private static readonly SolidColorBrush DimBrush     = Frozen(0x6A, 0x6A, 0x70);  // --text-dim
+
+    private static SolidColorBrush Frozen(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
+    private static SolidColorBrush SeverityBrush(AlertSeverity severity) => severity switch
+    {
+        AlertSeverity.Critical => DangerBrush,
+        AlertSeverity.Warning => WarningBrush,
+        _ => NominalBrush
+    };
 }

@@ -60,12 +60,23 @@ public class ThresholdEvaluator
         return (overall, alerts);
     }
 
-    private AlertSeverity EvaluateThreshold(float value, float warningThreshold, float criticalThreshold)
+    /// <summary>
+    /// Classifies a single value against a warning/critical pair.
+    /// Both bounds are inclusive.
+    ///
+    /// Public and static so the tray icons and overlay colour their
+    /// readouts by exactly the rule that drives the status badge and the
+    /// alert log — one definition of "warm", not three.
+    /// </summary>
+    public static AlertSeverity Classify(float value, float warningThreshold, float criticalThreshold)
     {
         if (value >= criticalThreshold) return AlertSeverity.Critical;
         if (value >= warningThreshold) return AlertSeverity.Warning;
         return AlertSeverity.Nominal;
     }
+
+    private AlertSeverity EvaluateThreshold(float value, float warningThreshold, float criticalThreshold)
+        => Classify(value, warningThreshold, criticalThreshold);
 
     private void UpdateOverall(ref AlertSeverity overall, AlertSeverity current)
     {

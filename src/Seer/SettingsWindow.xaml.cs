@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using Seer.Models;
 using Seer.Services;
@@ -16,7 +18,21 @@ namespace Seer;
 /// </summary>
 public partial class SettingsWindow : Window
 {
+    /// <summary>
+    /// One row of the readout picker. Plain settable properties are
+    /// enough: the checkboxes are two-way bound and read back on Save,
+    /// and nothing outside the dialog changes them while it's open.
+    /// </summary>
+    private sealed class ReadoutRow
+    {
+        public required ReadoutMetric Metric { get; init; }
+        public required string Name { get; init; }
+        public bool InTray { get; set; }
+        public bool InOsd { get; set; }
+    }
+
     private readonly AppSettings _settings;
+    private readonly List<ReadoutRow> _readoutRows = new();
 
     /// <summary>Bounds chosen to reject nonsense, not to be clever.</summary>
     private const float MinLoad = 1f, MaxLoad = 100f;
@@ -35,6 +51,19 @@ public partial class SettingsWindow : Window
         // The registry is the source of truth for startup, not the
         // settings file — the user may have removed the entry by hand.
         StartWithWindowsBox.IsChecked = StartupService.IsEnabled();
+
+        foreach (var metric in ReadoutFormatter.All)
+        {
+            _readoutRows.Add(new ReadoutRow
+            {
+                Metric = metric,
+                Name = ReadoutFormatter.DisplayName(metric),
+                InTray = settings.TrayMetrics.Contains(metric),
+                InOsd = settings.OsdMetrics.Contains(metric)
+            });
+        }
+
+        ReadoutList.ItemsSource = _readoutRows;
     }
 
     private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -61,6 +90,11 @@ public partial class SettingsWindow : Window
         }
         _settings.StartWithWindows = wantsStartup;
 
+        // Rebuilt in ReadoutFormatter.All order, so the overlay reads in
+        // a stable order rather than the order boxes were ticked.
+        _settings.TrayMetrics = _readoutRows.Where(r => r.InTray).Select(r => r.Metric).ToList();
+        _settings.OsdMetrics = _readoutRows.Where(r => r.InOsd).Select(r => r.Metric).ToList();
+
         SettingsService.Save(_settings);
         DialogResult = true;
         Close();
@@ -75,6 +109,14 @@ public partial class SettingsWindow : Window
     private void ResetButton_Click(object sender, RoutedEventArgs e)
     {
         var defaults = new AppSettings();
+
+        foreach (var row in _readoutRows)
+        {
+            row.InTray = defaults.TrayMetrics.Contains(row.Metric);
+            row.InOsd = defaults.OsdMetrics.Contains(row.Metric);
+        }
+        ReadoutList.Items.Refresh();
+
         LoadWarningBox.Text  = Format(defaults.LoadWarningThreshold);
         LoadCriticalBox.Text = Format(defaults.LoadCriticalThreshold);
         TempWarningBox.Text  = Format(defaults.TempWarningThreshold);

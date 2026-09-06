@@ -6,9 +6,9 @@
 ---
 
 ## Current Focus
-- **Working on:** settings window (thresholds + startup) — complete
-- **Next up:** configurable readouts — temps as taskbar tray icons (Afterburner style)
-  and a Seer-styled OSD strip, both toggled from the tray menu
+- **Working on:** configurable readouts (tray icons + OSD strip) — complete
+- **Next up:** investigate the intermittent process death logged under
+  MILESTONE.md "Known issues"; then remaining Tier 3/4 features
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -38,6 +38,7 @@
 | Top Processes Panel | ✅ Complete | Uses `System.Diagnostics.Process` with graceful admin/access denied fallback |
 | Tester packaging | ✅ Complete | Single-file self-contained `.dist/Seer.exe` (~64 MB), icon, versioning, crash logs to `%AppData%` |
 | Settings window | ✅ Complete | Editable load/temp thresholds + start-with-Windows; validated, applies without restart |
+| Configurable readouts | ✅ Complete | Metrics as taskbar tray icons and in the OSD strip, chosen per surface; severity-coloured |
 | Unit tests | ✅ Started | `tests/Seer.Tests` — 19 tests over `ThresholdEvaluator` (the only pure-logic component) |
 
 ---
@@ -86,6 +87,7 @@
 | File | Purpose |
 |------|---------|
 | `src/Seer/Controls/TrayIconController.cs` | Owns the tray icon and context menu; raises events, holds no app state |
+| `src/Seer/Controls/TrayMetricIcons.cs` | Draws metric values as taskbar tray icons; owns the HICON lifetime |
 | `src/Seer/Controls/HudBackground.cs` | Builds the 40px HUD grid brush |
 | `src/Seer/Controls/HudPanel.cs` | Panel container with corner brackets |
 | `src/Seer/Controls/TrendChart.xaml(.cs)` | 120-sample rolling sparkline |
@@ -101,6 +103,7 @@
 | `src/Seer/Models/ProcessMetrics.cs` | Lightweight record for process ID, Name, CPU %, and RAM (MB) |
 | `src/Seer/Models/DiskMetrics.cs` | Lightweight record for disk read/write throughput |
 | `src/Seer/Models/NetworkMetrics.cs` | Lightweight record for network up/down Mbps throughput |
+| `src/Seer/Models/ReadoutMetric.cs` | Enum of values that can be shown in the tray or OSD |
 
 ### Services
 
@@ -117,6 +120,7 @@
 | `src/Seer/Services/ElevationService.cs` | Elevation | `IsElevated` and `TryRelaunchElevated()` (UAC relaunch); single source of truth for admin state |
 | `src/Seer/Services/WindowPlacement.cs` | Geometry | `IsOnScreen()` — stops restoring the window onto a disconnected monitor |
 | `src/Seer/Services/StartupService.cs` | Launch at login | HKCU Run key add/remove; deliberately not HKLM, which would auto-start elevated |
+| `src/Seer/Services/ReadoutFormatter.cs` | Readouts | Formats one metric into label/value/severity; shared by the tray icons and the OSD so they can't disagree |
 
 ---
 
@@ -184,6 +188,7 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-06 | Claude | feat: configurable readouts — metrics as taskbar tray icons (Afterburner style) and a metric-driven OSD strip, both toggled from the tray menu |
 | 2026-09-06 | Claude | feat: settings window — editable alert thresholds and start-with-Windows, reachable from the title bar and tray; adds Seer.Tests with 19 ThresholdEvaluator tests |
 | 2026-09-06 | Claude | refactor: split MainWindow.xaml.cs (776→321 lines) — rendering to MainWindow.Panels.cs; tray, background grid, elevation and window placement to real classes |
 | 2026-09-06 | Claude | docs: add README.md; correct MILESTONE.md (Tier 2 + network throughput were shipped but unchecked) and log the agreed backlog |
@@ -193,4 +198,3 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 | 2026-08-19 | Antigravity | feat: implement Disk I/O monitoring using System.Diagnostics.PerformanceCounter |
 | 2026-08-19 | Antigravity | feat: implement top processes by CPU/RAM using System.Diagnostics.Process |
 | 2026-08-19 | Antigravity | feat: Desktop OSD Integration — interactive (draggable) and locked (click-through) modes, AppSettings binding, and system tray lifecycle integration |
-| 2026-08-19 | Antigravity | fix: link OSD window to MainWindow lifecycle and wire live stats to update on polling timer |

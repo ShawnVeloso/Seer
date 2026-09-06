@@ -30,6 +30,7 @@ public partial class MainWindow
         UpdateTopProcessesPanel();
         
         _osdWindow?.UpdateStats(cpu, gpu, mem);
+        _trayMetrics?.Update(cpu, mem, gpu, _appSettings);
         
         var (overallSeverity, newAlerts) = _thresholdEvaluator.Evaluate(cpu, mem, gpu, _appSettings);
         

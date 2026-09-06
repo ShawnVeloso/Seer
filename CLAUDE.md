@@ -38,6 +38,7 @@ HudConfig.cs              static bool toggles for aesthetic effects (glow/bracke
 Controls/HudPanel.cs      panel container w/ corner brackets
 Controls/TrendChart       120-sample rolling sparkline
 Controls/TrayIconController  owns NotifyIcon + context menu, raises events
+Controls/TrayMetricIcons  numbers drawn into taskbar icons (Afterburner style)
 Controls/HudBackground.cs the 40px grid brush
 Styles/Theme.xaml         ALL design tokens (SeerAccent, SeerWarning, PanelStyle, …)
 Models/                   immutable records only, no logic
@@ -46,6 +47,13 @@ Services/                 all data acquisition, never touches UI
 
 **Adding a tray menu item** goes in `TrayIconController` (the item + an event);
 `MainWindow.SetupTrayIcon` decides what it *means* and persists it.
+
+**Tray icon handles**: `TrayMetricIcons` draws a bitmap per update and turns
+it into an HICON. `NotifyIcon` does *not* copy it — it keeps the `Icon` and
+re-reads the handle when the shell redraws. So retire the previous handle only
+*after* the replacement is installed; destroying it immediately both leaks
+(the shell still holds it, so `DestroyIcon` fails) and leaves a dangling
+reference. Measured: wrong order leaked ~4 GDI handles/sec.
 
 **Adding a setting**: a property on `AppSettings` (that's all persistence
 needs), then a field in `SettingsWindow`. Edits mutate the shared
@@ -66,6 +74,7 @@ restart. Cancel must leave the instance untouched.
 | `ElevationService` | `IsElevated`, `TryRelaunchElevated()` (UAC) |
 | `WindowPlacement` | `IsOnScreen()` — guards restoring onto an unplugged monitor |
 | `StartupService` | HKCU Run key for launch-at-login (never HKLM — that would auto-start elevated) |
+| `ReadoutFormatter` | one metric → label/value/severity; shared by the tray icons and the OSD |
 | `CrashLogService` | crash reports + `AppVersion` build identity |
 
 The poll chain, all in `MainWindow.Panels.cs`:

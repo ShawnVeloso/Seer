@@ -38,7 +38,7 @@
   they can only be changed by hand-editing settings.json.
 - [x] **Start with Windows** — standard expectation for an always-on tray
   tool.
-- [ ] **Configurable readouts** — temps and other metrics shown as taskbar
+- [x] **Configurable readouts** — temps and other metrics shown as taskbar
   tray icons (MSI Afterburner style) and as a Seer-styled overlay strip,
   each an optional toggle in the tray right-click menu, with a choice of
   which metrics appear.
@@ -46,6 +46,20 @@
   hardware; currently the severity/escalation rules can only be checked
   by heating the machine up. Worth having before thresholds become
   user-editable.
+
+## Known issues
+
+- [ ] **Intermittent process death after a few minutes.** Observed twice
+  across roughly seven long runs (once at ~45s, once at ~90s), on builds
+  both before and after the tray-icon handle fix, and seen once with tray
+  readouts switched off. No crash log is written and no Windows
+  Application Error event is recorded, which points at a native fault
+  rather than a managed exception — but it was not reproducible on
+  demand, and no exit code was captured for either occurrence.
+  Confounder: a second, elevated Seer instance was running throughout all
+  of these runs, and both instances share `%AppData%/Seer/settings.json`.
+  Next step is a run with Windows Error Reporting local dumps enabled, or
+  a single-instance guard, before assuming it is any one component.
 
 ## Tier 3 — Medium-high effort (new domain: networking)
 

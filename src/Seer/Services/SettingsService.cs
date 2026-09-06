@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Seer.Models;
 
 namespace Seer.Services;
@@ -24,7 +25,10 @@ public static class SettingsService
         // Allow trailing commas and comments so hand-edited files don't
         // blow up deserialization.
         ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
+        AllowTrailingCommas = true,
+        // Metric lists are readable as names in a hand-edited file;
+        // as integers they'd be meaningless and break on reordering.
+        Converters = { new JsonStringEnumConverter() }
     };
 
     /// <summary>
