@@ -75,6 +75,7 @@ restart. Cancel must leave the instance untouched.
 | `WindowPlacement` | `IsOnScreen()` — guards restoring onto an unplugged monitor |
 | `StartupService` | HKCU Run key for launch-at-login (never HKLM — that would auto-start elevated) |
 | `ReadoutFormatter` | one metric → label/value/severity; shared by the tray icons and the OSD |
+| `PingMonitorService` | the only monitor that *sends* traffic; background loop + start/stop, UI polls a snapshot |
 | `CrashLogService` | crash reports + `AppVersion` build identity |
 
 The poll chain, all in `MainWindow.Panels.cs`:
@@ -141,6 +142,13 @@ content off-screen with `RenderTargetBitmap` — that also proves every
   `PerformanceCounter` / WMI / process enumeration; `AccessDenied` is expected.
 - **Adding a metric** = new `Models/XMetrics.cs` record + `Services/XService.cs`
   + an `UpdateXPanel()` called from `UpdatePanels()`. Keep that shape.
+- **Anything slow or asynchronous does not go on the poll timer.** A ping
+  takes as long as it takes; awaiting one on the dispatcher freezes the
+  window. `PingMonitorService` is the pattern: a background loop owns the
+  cadence and publishes an immutable snapshot, the UI reads it on its tick.
+- **Adding a panel** means editing `MainWindow.xaml`'s outer grid, where
+  panels sit on even rows and 12px gaps on odd ones. Inserting one shifts
+  every `Grid.Row` below it.
 - **Prefer BCL over new packages.** Only 3 deps exist; adding one needs the
   lead developer's OK (AGENTS.md §3).
 

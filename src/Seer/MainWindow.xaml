@@ -201,6 +201,8 @@
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Disk & Network I/O -->
                     <RowDefinition Height="12" /> <!-- Gap -->
+                    <RowDefinition Height="Auto" /> <!-- Ping -->
+                    <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Top Processes -->
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Alerts -->
@@ -497,8 +499,94 @@
                     </Grid>
                 </controls:HudPanel>
 
-                <!-- ═══ Top Processes Panel ═══ -->
+                <!-- ═══ Ping / Latency Panel ═══ -->
                 <controls:HudPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                BorderThickness="0,0,0,1"
+                                Padding="8,6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="[8] PING"
+                                           Style="{StaticResource PanelHeaderStyle}"
+                                           VerticalAlignment="Center" />
+
+                                <TextBlock Grid.Column="1" x:Name="PingStateText"
+                                           Text="STOPPED"
+                                           Style="{StaticResource TagStyle}"
+                                           VerticalAlignment="Center"
+                                           Margin="10,0,0,0" />
+
+                                <!-- Unlike every other panel, this one sends
+                                     traffic, so it stays off until started. -->
+                                <Button Grid.Column="2" x:Name="PingToggleButton"
+                                        Content="START"
+                                        Style="{StaticResource SeerActionButtonStyle}"
+                                        Padding="12,2"
+                                        Click="PingToggleButton_Click" />
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="1" Margin="12,10,12,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Host -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Host"
+                                       Style="{StaticResource BaseTextStyle}"
+                                       Foreground="{StaticResource SeerTextDim}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,10,6" />
+                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="PingHostBox"
+                                     Style="{StaticResource SeerTextBoxStyle}"
+                                     TextAlignment="Left"
+                                     Margin="0,0,0,6" />
+
+                            <!-- Latency + average -->
+                            <TextBlock Grid.Row="1" Grid.Column="1"
+                                       Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Latency: " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="PingLatencyValue" Text="--" />
+                            </TextBlock>
+                            <TextBlock Grid.Row="1" Grid.Column="3"
+                                       Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                                <Run Text="Average: " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="PingAverageValue" Text="--" />
+                            </TextBlock>
+
+                            <!-- Jitter + loss -->
+                            <TextBlock Grid.Row="2" Grid.Column="1"
+                                       Style="{StaticResource BaseTextStyle}">
+                                <Run Text="Jitter:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="PingJitterValue" Text="--" />
+                            </TextBlock>
+                            <TextBlock Grid.Row="2" Grid.Column="3"
+                                       Style="{StaticResource BaseTextStyle}">
+                                <Run Text="Loss:    " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="PingLossValue" Text="--" />
+                            </TextBlock>
+                        </Grid>
+                    </Grid>
+                </controls:HudPanel>
+
+                <!-- ═══ Top Processes Panel ═══ -->
+                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -553,7 +641,7 @@
                 </controls:HudPanel>
 
                 <!-- ═══ Alerts Panel (collapsed by default) ═══ -->
-                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -628,7 +716,7 @@
                 </controls:HudPanel>
 
                 <!-- ═══ System Info Panel (collapsed by default) ═══ -->
-                <controls:HudPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="3">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

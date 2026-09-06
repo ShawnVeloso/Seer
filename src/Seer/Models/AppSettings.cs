@@ -65,6 +65,18 @@ public class AppSettings
         ReadoutMetric.MemUsed
     };
 
+    // --- Ping ---
+
+    /// <summary>
+    /// Target for the latency panel. Persisted so it survives a restart;
+    /// pinging itself is never resumed automatically, because it sends
+    /// traffic and that should stay an explicit choice.
+    /// </summary>
+    public string PingHost { get; set; } = "1.1.1.1";
+
+    /// <summary>Seconds between pings while running.</summary>
+    public double PingIntervalSeconds { get; set; } = 2;
+
     // --- Thresholds (Shared by OSD and Alert logic) ---
     public float LoadWarningThreshold { get; set; } = 85f;
     public float LoadCriticalThreshold { get; set; } = 95f;

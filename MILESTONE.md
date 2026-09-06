@@ -49,24 +49,23 @@
 
 ## Known issues
 
-- [ ] **Intermittent process death after a few minutes.** Observed twice
-  across roughly seven long runs (once at ~45s, once at ~90s), on builds
-  both before and after the tray-icon handle fix, and seen once with tray
-  readouts switched off. No crash log is written and no Windows
-  Application Error event is recorded, which points at a native fault
-  rather than a managed exception — but it was not reproducible on
-  demand, and no exit code was captured for either occurrence.
-  Confounder: a second, elevated Seer instance was running throughout all
-  of these runs, and both instances share `%AppData%/Seer/settings.json`.
-  Next step is a run with Windows Error Reporting local dumps enabled, or
-  a single-instance guard, before assuming it is any one component.
+- [x] **Intermittent process death after a few minutes** — most likely
+  explained, not a defect. It was observed only while a second Seer
+  instance was running alongside the test instance, and the lead
+  developer confirmed afterwards having left one running and then closed
+  both; closing a window or using a tray Exit with several instances up
+  shuts down whichever one the click landed on. That fits every symptom:
+  a clean exit, no crash log, no Windows Application Error event, and no
+  reproducibility. A single-instance run afterwards stayed up for ten
+  minutes with flat GDI handles and steady memory. Reopen this if it is
+  ever seen with exactly one instance running.
 
 ## Tier 3 — Medium-high effort (new domain: networking)
 
-- [ ] **Ping/latency check with start/stop control** — genuinely new domain
-  (`System.Net.NetworkInformation.Ping`), needs async task management and
-  a start/stop UI state — no prior branch has built a user-toggleable
-  background process before.
+- [x] **Ping/latency check with start/stop control** — shipped as
+  `PingMonitorService`: a background loop with its own cadence publishing
+  an immutable snapshot the UI polls, rather than awaiting a ping on the
+  dispatcher. Reports latency, average, jitter and packet loss.
 - [x] **Network throughput (up/down Mbps)** — shipped; `NetworkInterface`
   byte counters sampled between polls, as anticipated.
 
@@ -101,3 +100,6 @@
 - [x] Network throughput up / down (NetworkInterface)
 - [x] Tester packaging (single-file self-contained build, icon, versioning,
   crash logs to `%AppData%`)
+- [x] Settings window (editable thresholds, start with Windows)
+- [x] Configurable readouts (taskbar tray icons + OSD strip)
+- [x] Ping / latency panel with start-stop control
