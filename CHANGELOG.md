@@ -10,6 +10,7 @@
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-08-18 | Antigravity | feat: threshold alerts — extracted ThresholdEvaluator, added session-only Alert Log UI panel with state-change logging |
 | 2026-08-18 | Antigravity | feat: settings persistence — window geometry saved/restored via AppSettings + SettingsService; off-screen and corruption fallbacks |
 | 2026-08-18 | Antigravity | fix: use SingleBorderWindow and 8px padding trigger to prevent maximized window taskbar overlap |
 | 2026-08-18 | Antigravity | feat: add static system-info panel (WMI + LHM, collapsible, one-shot fetch at startup) |

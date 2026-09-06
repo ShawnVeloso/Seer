@@ -6,8 +6,9 @@
 ---
 
 ## Current Focus
-- **Working on:** TBD (tester packaging complete)
-- **Next up:** TBD — remaining MILESTONE.md items (ping/latency, fan speeds, SMART)
+- **Working on:** README + MILESTONE correction (docs pass)
+- **Next up:** split `MainWindow.xaml.cs` (AGENTS.md §4), then editable thresholds +
+  start-with-Windows, then configurable tray/OSD readouts — see MILESTONE.md Tier 2b
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -61,6 +62,7 @@
 | `src/Seer/Properties/PublishProfiles/TesterBuild.pubxml` | Publish profile for the tester build (single-file, self-contained, → `.dist/`) |
 | `tools/make-icon.ps1` | Generates `seer.ico` from the design system palette |
 | `AGENTS.md` | Agent rulebook (all project rules in one place) |
+| `README.md` | Project front page — what Seer shows, how to run it, how to build it |
 | `RELEASE.md` | How to cut a tester build, what to send testers, known friction |
 | `CLAUDE.md` | Claude-specific working notes — distilled map/conventions + when to read the longer docs |
 | `INDEX.md` | This file — project state, file manifest, log entries |
@@ -155,6 +157,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-06 | Claude | docs: add README.md; correct MILESTONE.md (Tier 2 + network throughput were shipped but unchecked) and log the agreed backlog |
 | 2026-09-06 | Claude | feat: tester packaging — single-file self-contained publish profile, app/tray icon, build version in title bar + crash reports, %AppData% crash logging, RELEASE.md |
 | 2026-09-06 | Claude | docs: add CLAUDE.md working notes (distilled map/conventions + when to read the longer docs) |
 | 2026-08-19 | Antigravity | feat: implement network throughput (up/down Mbps) polling using NetworkInterface |
@@ -164,4 +167,3 @@ dotnet run --project src/Seer/Seer.csproj
 | 2026-08-19 | Antigravity | fix: link OSD window to MainWindow lifecycle and wire live stats to update on polling timer |
 | 2026-08-19 | Antigravity | fix: set ShutdownMode to OnMainWindowClose so hidden OSD window doesn't keep app alive |
 | 2026-08-19 | Antigravity | feat: OSD feasibility spike — added transparent topmost window with Win32 click-through |
-| 2026-08-18 | Antigravity | feat: threshold alerts — extracted ThresholdEvaluator, added session-only Alert Log UI panel with state-change logging |
