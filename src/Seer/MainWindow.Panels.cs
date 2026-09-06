@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Windows;
 using System.Windows.Media;
 using Seer.Models;
@@ -124,23 +126,7 @@ public partial class MainWindow
         // Per-core Load Bars
         if (cpu.CoreLoads != null && cpu.CoreLoads.Length > 0)
         {
-            var coreStrings = new string[cpu.CoreLoads.Length];
-            for (int i = 0; i < cpu.CoreLoads.Length; i++)
-            {
-                var core = cpu.CoreLoads[i];
-                float load = core.Load;
-
-                // Five segments and a whole-number percentage keep every
-                // cell exactly 13 characters wide, which is what lets
-                // four sit side by side in a half-width panel. The old
-                // 21-character form only ever fitted two, and overflowed
-                // below about 800px of window width.
-                int bars = (int)Math.Round(load / 20.0f);
-                bars = Math.Clamp(bars, 0, 5);
-                string barStr = new string('|', bars).PadRight(5);
-                coreStrings[i] = $"{i,2}[{barStr}{load,3:F0}%]";
-            }
-            CpuCoreBarsControl.ItemsSource = coreStrings;
+            CpuCoreBarsControl.ItemsSource = BuildCoreRows(cpu.CoreLoads);
             CpuCoreBarsControl.Visibility = Visibility.Visible;
         }
         else
@@ -149,6 +135,115 @@ public partial class MainWindow
         }
 
         return cpu;
+    }
+
+    // ── Per-core bar layout ────────────────────────────────────────────
+    //
+    // Threads read top-to-bottom down each column (0,1,2,3 in the first
+    // column, not across the first row), which means the number of rows
+    // has to be known before the text is built — so the rows are composed
+    // here rather than left to a wrapping panel. Every cell is the same
+    // width in a monospace font, so the columns line up by construction.
+
+    /// <summary>Characters in one cell: " 0[|||  39%]".</summary>
+    private const int CoreCellChars = 13;
+
+    /// <summary>Gap between columns, in characters.</summary>
+    private const int CoreGapChars = 2;
+
+    /// <summary>Must match the FontSize on the item template in XAML.</summary>
+    private const double CoreFontSize = 12;
+
+    /// <summary>Width of one character, measured once and cached.</summary>
+    private double _coreCharWidth;
+
+    /// <summary>
+    /// Lays the cores out column-major and returns one string per row.
+    /// </summary>
+    private string[] BuildCoreRows((string Name, float Load)[] coreLoads)
+    {
+        var cells = new string[coreLoads.Length];
+        for (var i = 0; i < coreLoads.Length; i++)
+        {
+            var load = coreLoads[i].Load;
+
+            // Five segments and a whole-number percentage keep every cell
+            // exactly CoreCellChars wide, which is what lets several sit
+            // side by side in a half-width panel. The old 21-character
+            // form only ever fitted two, and overflowed below about 800px
+            // of window width.
+            var bars = Math.Clamp((int)Math.Round(load / 20.0f), 0, 5);
+            cells[i] = $"{i,2}[{new string('|', bars).PadRight(5)}{load,3:F0}%]";
+        }
+
+        var columns = CoreColumnCount(cells.Length);
+        var rows = (int)Math.Ceiling(cells.Length / (double)columns);
+        var gap = new string(' ', CoreGapChars);
+        var lines = new string[rows];
+
+        for (var row = 0; row < rows; row++)
+        {
+            var line = new StringBuilder();
+            for (var column = 0; column < columns; column++)
+            {
+                // Walk down each column before moving right.
+                var index = (column * rows) + row;
+                if (index >= cells.Length)
+                    break;
+
+                if (column > 0)
+                    line.Append(gap);
+
+                line.Append(cells[index]);
+            }
+            lines[row] = line.ToString();
+        }
+
+        return lines;
+    }
+
+    /// <summary>
+    /// How many columns fit the panel's current width. Recomputed each
+    /// poll, so resizing the window settles within a second without
+    /// needing a layout event.
+    /// </summary>
+    private int CoreColumnCount(int cellCount)
+    {
+        var available = CpuCoreBarsControl.ActualWidth;
+
+        // First call happens before layout, so ActualWidth is still zero.
+        // Guess, and the next tick corrects it.
+        if (available <= 0)
+            return Math.Min(4, cellCount);
+
+        if (_coreCharWidth <= 0)
+            _coreCharWidth = MeasureCoreCharWidth();
+
+        // n columns occupy n*cell + (n-1)*gap characters, so the number
+        // that fits is (chars + gap) / (cell + gap).
+        var availableChars = (int)(available / _coreCharWidth);
+        var columns = (availableChars + CoreGapChars) / (CoreCellChars + CoreGapChars);
+
+        return Math.Clamp(columns, 1, cellCount);
+    }
+
+    /// <summary>
+    /// Measures one character of the panel's monospace face. Cached — the
+    /// font can't change while the app is running.
+    /// </summary>
+    private double MeasureCoreCharWidth()
+    {
+        var family = (FontFamily)FindResource("SeerFontFamily");
+        var measured = new FormattedText(
+            "0",
+            CultureInfo.InvariantCulture,
+            FlowDirection.LeftToRight,
+            new Typeface(family, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
+            CoreFontSize,
+            Brushes.White,
+            VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+        return measured.Width;
     }
 
     /// <summary>
