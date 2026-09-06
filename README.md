@@ -16,14 +16,21 @@ Single-process WPF app. No installer, no service, no telemetry, no account.
 | **GPU** | Temperature, hot spot, load, clock, fan speed, VRAM |
 | **Disk I/O** | Read / write throughput |
 | **Network I/O** | Up / down Mbps |
+| **Ping** | Latency, average, jitter and packet loss to a host you choose — started and stopped by hand |
 | **Top processes** | The heaviest processes by CPU, with memory use |
 | **Trend charts** | 120-second rolling history for CPU, memory and GPU load |
 | **Alerts** | A session log of every threshold crossing |
 | **System info** | Motherboard, BIOS, CPU, RAM and GPU — fetched once at startup |
 
 A status strip across the top reads `NOMINAL`, `WARNING` or `CRITICAL` so you
-can judge system health from across the room, and a desktop overlay (OSD) can
-float key stats over other windows, including fullscreen games.
+can judge system health from across the room. Chosen values can also be shown
+outside the window: as numbers drawn into taskbar tray icons, or in a desktop
+overlay that floats over other windows including fullscreen games. Both are
+toggled from the tray menu, and which metrics appear is up to you.
+
+Alert thresholds are editable in Settings, reachable from the title bar or the
+tray. Nothing is sent anywhere — the only component that touches the network is
+the ping panel, and it stays off until you start it.
 
 ---
 

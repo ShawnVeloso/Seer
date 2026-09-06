@@ -28,6 +28,7 @@ public partial class MainWindow
         UpdateDiskPanel();
         UpdateNetworkPanel();
         UpdateTopProcessesPanel();
+        UpdatePingPanel();
         
         _osdWindow?.UpdateStats(cpu, gpu, mem);
         _trayMetrics?.Update(cpu, mem, gpu, _appSettings);
@@ -338,6 +339,58 @@ public partial class MainWindow
         
         NetUpBar.Text = metrics.UploadBar;
         NetUpValue.Text = $"{metrics.UploadMbps:F1} Mbps";
+    }
+
+    /// <summary>
+    /// Renders the latency panel from the monitor's snapshot.
+    ///
+    /// Read on the UI timer rather than pushed from the ping loop: the
+    /// loop runs on a background task at its own cadence, and polling an
+    /// immutable snapshot avoids marshalling every reply onto the
+    /// dispatcher just to update four labels.
+    /// </summary>
+    private void UpdatePingPanel()
+    {
+        var ping = _pingMonitor.GetSnapshot();
+
+        PingToggleButton.Content = ping.IsRunning ? "STOP" : "START";
+        PingHostBox.IsEnabled = !ping.IsRunning;
+
+        if (!ping.IsRunning && ping.Sent == 0)
+        {
+            PingStateText.Text = "STOPPED";
+            PingStateText.Foreground = _dimBrush;
+            PingLatencyValue.Text = "--";
+            PingAverageValue.Text = "--";
+            PingJitterValue.Text = "--";
+            PingLossValue.Text = "--";
+            return;
+        }
+
+        if (ping.LastError != null)
+        {
+            PingStateText.Text = ping.LastError.ToUpperInvariant();
+            PingStateText.Foreground = _warningBrush;
+        }
+        else
+        {
+            PingStateText.Text = ping.IsRunning ? "RUNNING" : "STOPPED";
+            PingStateText.Foreground = ping.IsRunning ? _successBrush : _dimBrush;
+        }
+
+        PingLatencyValue.Text = ping.LastMs.HasValue ? $"{ping.LastMs.Value} ms" : "--";
+        PingAverageValue.Text = ping.AverageMs.HasValue ? $"{ping.AverageMs.Value:F1} ms" : "--";
+        PingJitterValue.Text = ping.JitterMs.HasValue ? $"{ping.JitterMs.Value:F1} ms" : "--";
+        PingLossValue.Text = $"{ping.LossPercent:F0} % ({ping.Sent} sent)";
+
+        // Loss is the reading that matters most, so colour it directly
+        // rather than leaving it to be spotted among the numbers.
+        PingLossValue.Foreground = ping.LossPercent switch
+        {
+            >= 10 => _dangerBrush,
+            > 0 => _warningBrush,
+            _ => _normalBrush
+        };
     }
 
     private void UpdateStatusBadge(AlertSeverity severity)

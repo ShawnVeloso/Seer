@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private readonly ProcessMonitorService _processMonitor;
     private readonly DiskMonitorService _diskMonitor;
     private readonly NetworkMonitorService _networkMonitor;
+    private readonly PingMonitorService _pingMonitor = new();
     private readonly DispatcherTimer _pollTimer;
 
     // History queues for trend charts
@@ -37,6 +38,9 @@ public partial class MainWindow : Window
     // Cached brushes from theme resources for elevation-aware display
     private readonly SolidColorBrush _normalBrush;
     private readonly SolidColorBrush _warningBrush;
+    private readonly SolidColorBrush _dimBrush;
+    private readonly SolidColorBrush _successBrush;
+    private readonly SolidColorBrush _dangerBrush;
 
     private readonly ThresholdEvaluator _thresholdEvaluator = new();
     private AppSettings _appSettings = new();
@@ -56,6 +60,9 @@ public partial class MainWindow : Window
 
         _normalBrush = (SolidColorBrush)FindResource("SeerText");
         _warningBrush = (SolidColorBrush)FindResource("SeerWarning");
+        _dimBrush = (SolidColorBrush)FindResource("SeerTextDim");
+        _successBrush = (SolidColorBrush)FindResource("SeerSuccess");
+        _dangerBrush = (SolidColorBrush)FindResource("SeerDanger");
 
         // Nothing to elevate to if we're already elevated.
         if (ElevationService.IsElevated)
@@ -125,6 +132,9 @@ public partial class MainWindow : Window
         ApplyOsdSettings();
         SetupTrayIcon();
         ApplyTrayReadoutSettings();
+
+        PingHostBox.Text = _appSettings.PingHost;
+        UpdatePingPanel();
     }
 
     /// <summary>
@@ -325,11 +335,39 @@ public partial class MainWindow : Window
         _trayIcon?.Dispose();
         _trayMetrics?.Dispose();
         _pollTimer.Stop();
+        _pingMonitor.Dispose();
         _monitor.Dispose();
         _osdWindow?.Close();
         base.OnClosed(e);
     }
 
+
+    /// <summary>
+    /// Starts or stops the latency monitor. This is the only control in
+    /// Seer that causes network traffic, so it is always an explicit
+    /// action — never resumed on launch.
+    /// </summary>
+    private void PingToggleButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pingMonitor.IsRunning)
+        {
+            _pingMonitor.Stop();
+        }
+        else
+        {
+            var host = PingHostBox.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrEmpty(host))
+                return;
+
+            // Remember the host, but not that it was running.
+            _appSettings.PingHost = host;
+            SettingsService.Save(_appSettings);
+
+            _pingMonitor.Start(host, TimeSpan.FromSeconds(_appSettings.PingIntervalSeconds));
+        }
+
+        UpdatePingPanel();
+    }
 
     private void SettingsButton_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
