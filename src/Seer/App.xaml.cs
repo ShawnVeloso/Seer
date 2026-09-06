@@ -10,14 +10,11 @@ public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
-        AppDomain.CurrentDomain.UnhandledException += (s, ev) => 
-        {
-            File.WriteAllText("crash.log", ev.ExceptionObject.ToString());
-        };
-        DispatcherUnhandledException += (s, ev) => 
-        {
-            File.WriteAllText("crash_dispatcher.log", ev.Exception.ToString());
-        };
+        AppDomain.CurrentDomain.UnhandledException += (s, ev) =>
+            CrashLogService.Write("AppDomain.UnhandledException", ev.ExceptionObject);
+
+        DispatcherUnhandledException += (s, ev) =>
+            CrashLogService.Write("DispatcherUnhandledException", ev.Exception);
         base.OnStartup(e);
 
         // RunSensorSmokeTest(); // Preserved for debugging, but disabled for live UI

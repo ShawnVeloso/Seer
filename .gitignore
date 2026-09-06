@@ -51,3 +51,11 @@ $RECYCLE.BIN/
 .idea/
 *.sln.iml
 graphify-out/
+
+# Local crash/smoke logs — written to %AppData%/Seer/logs at runtime,
+# but older builds dropped them in the working directory.
+crash*.log
+smoke_test.log
+
+# Tester build output (see src/Seer/Properties/PublishProfiles/TesterBuild.pubxml)
+.dist/
