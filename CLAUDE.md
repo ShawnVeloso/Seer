@@ -27,17 +27,24 @@ that's ~8k tokens for what is usually a one-file change.
 Everything lives under `src/Seer/`. Flat by design — no deep nesting.
 
 ```
-App.xaml(.cs)          entry point, merges Theme.xaml, ShutdownMode=OnMainWindowClose
-MainWindow.xaml(.cs)   THE UI shell (~770 LOC .cs / 640 XAML) — custom chrome,
-                       status strip, all panels, 1s DispatcherTimer, tray icon
-OsdWindow.xaml(.cs)    desktop overlay; locked = Win32 click-through, unlocked = draggable
-HudConfig.cs           static bool toggles for aesthetic effects (glow/brackets/grid/hover)
-Controls/HudPanel.cs   panel container w/ corner brackets
-Controls/TrendChart    120-sample rolling sparkline
-Styles/Theme.xaml      ALL design tokens (SeerAccent, SeerWarning, PanelStyle, …)
-Models/                immutable records only, no logic
-Services/              all data acquisition, never touches UI
+App.xaml(.cs)             entry point, merges Theme.xaml, ShutdownMode=OnMainWindowClose
+MainWindow.xaml.cs        lifecycle + orchestration only — services, 1s poll timer,
+                          geometry restore/save, tray + OSD ownership
+MainWindow.Panels.cs      partial: ALL rendering (Update*Panel, status badge, history)
+MainWindow.xaml           the UI itself (~640 lines)
+OsdWindow.xaml(.cs)       desktop overlay; locked = Win32 click-through, unlocked = draggable
+HudConfig.cs              static bool toggles for aesthetic effects (glow/brackets/grid/hover)
+Controls/HudPanel.cs      panel container w/ corner brackets
+Controls/TrendChart       120-sample rolling sparkline
+Controls/TrayIconController  owns NotifyIcon + context menu, raises events
+Controls/HudBackground.cs the 40px grid brush
+Styles/Theme.xaml         ALL design tokens (SeerAccent, SeerWarning, PanelStyle, …)
+Models/                   immutable records only, no logic
+Services/                 all data acquisition, never touches UI
 ```
+
+**Adding a tray menu item** goes in `TrayIconController` (the item + an event);
+`MainWindow.SetupTrayIcon` decides what it *means* and persists it.
 
 **Services → what they read**
 
@@ -50,11 +57,18 @@ Services/              all data acquisition, never touches UI
 | `NetworkMonitorService` | `NetworkInterface` byte-counter deltas → Mbps |
 | `SettingsService` | `%AppData%/Seer/settings.json`, `System.Text.Json` |
 | `ThresholdEvaluator` | pure logic; single source of truth for NOMINAL/WARNING/CRITICAL |
+| `ElevationService` | `IsElevated`, `TryRelaunchElevated()` (UAC) |
+| `WindowPlacement` | `IsOnScreen()` — guards restoring onto an unplugged monitor |
+| `CrashLogService` | crash reports + `AppVersion` build identity |
 
-`MainWindow.xaml.cs` is the only place polling and rendering meet:
+The poll chain, all in `MainWindow.Panels.cs`:
 `PollTimer_Tick` → `UpdatePanels()` → `UpdateCpuPanel()` / `UpdateMemoryPanel()` /
 `UpdateGpuPanel()` / `UpdateDiskPanel()` / `UpdateNetworkPanel()` /
 `UpdateTopProcessesPanel()` → `UpdateStatusBadge()`.
+
+The `Update*Panel` methods write straight to `x:Name`'d elements, so they're a
+partial class, not standalone types — decoupling them properly means a view
+model, which is a much bigger change than has been warranted so far.
 
 ---
 

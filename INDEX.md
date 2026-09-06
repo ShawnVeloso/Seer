@@ -6,9 +6,9 @@
 ---
 
 ## Current Focus
-- **Working on:** README + MILESTONE correction (docs pass)
-- **Next up:** split `MainWindow.xaml.cs` (AGENTS.md §4), then editable thresholds +
-  start-with-Windows, then configurable tray/OSD readouts — see MILESTONE.md Tier 2b
+- **Working on:** MainWindow split (AGENTS.md §4) — complete
+- **Next up:** editable thresholds + start-with-Windows (+ ThresholdEvaluator tests),
+  then configurable tray-icon/OSD readouts — see MILESTONE.md Tier 2b
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -54,7 +54,9 @@
 | `src/Seer/Seer.csproj` | .NET 8 WPF project file; NuGet ref to LibreHardwareMonitorLib |
 | `src/Seer/app.manifest` | Requests admin elevation for hardware sensor access |
 | `src/Seer/App.xaml` / `src/Seer/App.xaml.cs` | WPF application entry point; merges Theme.xaml, runs sensor smoke test |
-| `src/Seer/MainWindow.xaml` / `src/Seer/MainWindow.xaml.cs` | Main UI shell — custom chrome title bar, status strip, placeholder panels, tray icon lifecycle |
+| `src/Seer/MainWindow.xaml` | Main UI layout — custom chrome title bar, status strip, all panels |
+| `src/Seer/MainWindow.xaml.cs` | Window lifecycle + orchestration — services, poll timer, geometry, tray and OSD ownership |
+| `src/Seer/MainWindow.Panels.cs` | Partial class holding all panel rendering (`Update*Panel`, status badge, history buffers) |
 | `src/Seer/OsdWindow.xaml` / `src/Seer/OsdWindow.xaml.cs` | Desktop OSD overlay with locked (click-through) and unlocked (draggable) modes |
 | `.gitignore` | Standard .NET gitignore (bin/, obj/, .vs/, etc.) |
 | `.agents/rules/seer_design_system.md` | Front-end design reference (colors, typography, layout rules) |
@@ -74,6 +76,15 @@
 | File | Purpose |
 |------|---------|
 | `src/Seer/Styles/Theme.xaml` | WPF ResourceDictionary — all design system tokens (colors, brushes, typography, panel/button styles) |
+
+### Controls
+
+| File | Purpose |
+|------|---------|
+| `src/Seer/Controls/TrayIconController.cs` | Owns the tray icon and context menu; raises events, holds no app state |
+| `src/Seer/Controls/HudBackground.cs` | Builds the 40px HUD grid brush |
+| `src/Seer/Controls/HudPanel.cs` | Panel container with corner brackets |
+| `src/Seer/Controls/TrendChart.xaml(.cs)` | 120-sample rolling sparkline |
 
 ### Models
 
@@ -99,6 +110,8 @@
 | `src/Seer/Services/DiskMonitorService.cs` | Disk I/O | Uses `PerformanceCounter` to track physical disk read/write throughput |
 | `src/Seer/Services/NetworkMonitorService.cs` | Network I/O | Calculates active Mbps throughput (up/down) via `NetworkInterface` |
 | `src/Seer/Services/CrashLogService.cs` | Diagnostics | Writes unhandled exceptions to `%AppData%/Seer/logs`; also hosts `AppVersion` (build identity for UI + reports) |
+| `src/Seer/Services/ElevationService.cs` | Elevation | `IsElevated` and `TryRelaunchElevated()` (UAC relaunch); single source of truth for admin state |
+| `src/Seer/Services/WindowPlacement.cs` | Geometry | `IsOnScreen()` — stops restoring the window onto a disconnected monitor |
 
 ---
 
@@ -107,8 +120,11 @@
 ```
 Single-process WPF app (requires admin elevation for sensor access).
 
-  src/Seer/App.xaml.cs          → startup, smoke test trigger
-  src/Seer/MainWindow.xaml      → UI shell (custom chrome, placeholder panels)
+  src/Seer/App.xaml.cs          → startup, crash handlers
+  src/Seer/MainWindow.xaml      → UI layout (custom chrome, panels)
+  src/Seer/MainWindow.xaml.cs   → lifecycle + orchestration
+  src/Seer/MainWindow.Panels.cs → rendering (partial class)
+  src/Seer/Controls/            → reusable UI pieces + tray controller
   src/Seer/Styles/Theme.xaml    → design tokens (colors, typography, styles)
   src/Seer/Services/            → sensor logic (separated from UI per AGENTS.md §4)
 ```
@@ -157,6 +173,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-06 | Claude | refactor: split MainWindow.xaml.cs (776→321 lines) — rendering to MainWindow.Panels.cs; tray, background grid, elevation and window placement to real classes |
 | 2026-09-06 | Claude | docs: add README.md; correct MILESTONE.md (Tier 2 + network throughput were shipped but unchecked) and log the agreed backlog |
 | 2026-09-06 | Claude | feat: tester packaging — single-file self-contained publish profile, app/tray icon, build version in title bar + crash reports, %AppData% crash logging, RELEASE.md |
 | 2026-09-06 | Claude | docs: add CLAUDE.md working notes (distilled map/conventions + when to read the longer docs) |
@@ -166,4 +183,3 @@ dotnet run --project src/Seer/Seer.csproj
 | 2026-08-19 | Antigravity | feat: Desktop OSD Integration — interactive (draggable) and locked (click-through) modes, AppSettings binding, and system tray lifecycle integration |
 | 2026-08-19 | Antigravity | fix: link OSD window to MainWindow lifecycle and wire live stats to update on polling timer |
 | 2026-08-19 | Antigravity | fix: set ShutdownMode to OnMainWindowClose so hidden OSD window doesn't keep app alive |
-| 2026-08-19 | Antigravity | feat: OSD feasibility spike — added transparent topmost window with Win32 click-through |

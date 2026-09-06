@@ -29,7 +29,7 @@
 
 ## Tier 2b — Agreed, not yet started
 
-- [ ] **Split `MainWindow.xaml.cs`** — 770+ lines carrying window chrome,
+- [x] **Split `MainWindow.xaml.cs`** — 770+ lines carrying window chrome,
   the poll loop, six panel updaters, tray lifecycle, OSD and settings.
   Violates AGENTS.md §4. Blocks the two items below, which would
   otherwise add more code to it.
