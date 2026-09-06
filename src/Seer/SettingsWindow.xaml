@@ -82,6 +82,59 @@
                            Margin="22,4,0,0" />
             </StackPanel>
 
+            <!-- ── Readouts ───────────────────────────────────────────── -->
+            <StackPanel Margin="12,18,12,0">
+                <TextBlock Text="READOUTS" Style="{StaticResource TagStyle}"
+                           Foreground="{StaticResource SeerAccent}" Margin="0,0,0,2" />
+                <TextBlock Style="{StaticResource DimTextStyle}" FontSize="11" TextWrapping="Wrap"
+                           Text="Which values appear outside the main window. Taskbar draws each as its own number in the notification area; overlay is the strip that floats over other windows."
+                           Margin="0,0,0,10" />
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="62" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Column="1" Text="TASKBAR"
+                               Style="{StaticResource TagStyle}"
+                               HorizontalAlignment="Center" Margin="0,0,0,6" />
+                    <TextBlock Grid.Column="2" Text="OVERLAY"
+                               Style="{StaticResource TagStyle}"
+                               HorizontalAlignment="Center" Margin="0,0,0,6" />
+                </Grid>
+
+                <ItemsControl x:Name="ReadoutList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="72" />
+                                    <ColumnDefinition Width="62" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                           Style="{StaticResource BaseTextStyle}"
+                                           VerticalAlignment="Center" />
+                                <CheckBox Grid.Column="1"
+                                          Style="{StaticResource SeerCheckBoxStyle}"
+                                          IsChecked="{Binding InTray}"
+                                          HorizontalAlignment="Center" />
+                                <CheckBox Grid.Column="2"
+                                          Style="{StaticResource SeerCheckBoxStyle}"
+                                          IsChecked="{Binding InOsd}"
+                                          HorizontalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
             <!-- ── Validation message ─────────────────────────────────── -->
             <TextBlock x:Name="ErrorText"
                        Style="{StaticResource BaseTextStyle}"

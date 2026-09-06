@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Seer.Models;
 
 /// <summary>
@@ -34,6 +36,34 @@ public class AppSettings
     /// state without a registry read on every open.
     /// </summary>
     public bool StartWithWindows { get; set; } = false;
+
+    // --- Readouts (desktop overlay + taskbar tray icons) ---
+
+    /// <summary>
+    /// Draw the selected metrics as numbers in the notification area,
+    /// one icon per metric, the way MSI Afterburner does.
+    /// </summary>
+    public bool ShowTrayReadouts { get; set; } = false;
+
+    /// <summary>
+    /// Metrics drawn as tray icons. Kept short by default: each entry
+    /// costs a slot in the user's notification area.
+    /// </summary>
+    public List<ReadoutMetric> TrayMetrics { get; set; } = new()
+    {
+        ReadoutMetric.CpuTemp,
+        ReadoutMetric.GpuTemp
+    };
+
+    /// <summary>Metrics shown in the desktop overlay strip.</summary>
+    public List<ReadoutMetric> OsdMetrics { get; set; } = new()
+    {
+        ReadoutMetric.CpuLoad,
+        ReadoutMetric.CpuTemp,
+        ReadoutMetric.GpuLoad,
+        ReadoutMetric.GpuTemp,
+        ReadoutMetric.MemUsed
+    };
 
     // --- Thresholds (Shared by OSD and Alert logic) ---
     public float LoadWarningThreshold { get; set; } = 85f;

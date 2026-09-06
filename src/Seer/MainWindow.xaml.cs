@@ -45,6 +45,7 @@ public partial class MainWindow : Window
     
     private OsdWindow? _osdWindow;
     private TrayIconController? _trayIcon;
+    private TrayMetricIcons? _trayMetrics;
     private bool _isExplicitShutdown = false;
 
     public MainWindow()
@@ -123,6 +124,7 @@ public partial class MainWindow : Window
         
         ApplyOsdSettings();
         SetupTrayIcon();
+        ApplyTrayReadoutSettings();
     }
 
     /// <summary>
@@ -133,7 +135,8 @@ public partial class MainWindow : Window
     private void SetupTrayIcon()
     {
         var exePath = Process.GetCurrentProcess().MainModule?.FileName ?? string.Empty;
-        _trayIcon = new TrayIconController(exePath, _appSettings.ShowOsd, _appSettings.LockOsd);
+        _trayIcon = new TrayIconController(
+            exePath, _appSettings.ShowOsd, _appSettings.LockOsd, _appSettings.ShowTrayReadouts);
 
         _trayIcon.ShowRequested += () =>
         {
@@ -149,6 +152,13 @@ public partial class MainWindow : Window
         };
 
         _trayIcon.SettingsRequested += OpenSettings;
+
+        _trayIcon.ShowTrayReadoutsChanged += show =>
+        {
+            _appSettings.ShowTrayReadouts = show;
+            SettingsService.Save(_appSettings);
+            ApplyTrayReadoutSettings();
+        };
 
         _trayIcon.ShowOsdChanged += showOsd =>
         {
@@ -166,6 +176,35 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
+    /// Creates or tears down the taskbar metric icons to match settings.
+    /// Safe to call repeatedly — it rebuilds the icon set from scratch,
+    /// which is why it's called on settings changes and not per poll.
+    /// </summary>
+    private void ApplyTrayReadoutSettings()
+    {
+        if (_appSettings.ShowTrayReadouts && _appSettings.TrayMetrics.Count > 0)
+        {
+            if (_trayMetrics == null)
+            {
+                _trayMetrics = new TrayMetricIcons();
+                _trayMetrics.ShowRequested += () =>
+                {
+                    Show();
+                    WindowState = WindowState.Normal;
+                    Activate();
+                };
+            }
+
+            _trayMetrics.SetMetrics(_appSettings.TrayMetrics);
+        }
+        else
+        {
+            _trayMetrics?.Dispose();
+            _trayMetrics = null;
+        }
+    }
+
+    /// <summary>
     /// Opens the settings dialog. Edits land on the shared AppSettings
     /// instance, so new thresholds apply on the next poll — no restart.
     /// </summary>
@@ -180,7 +219,12 @@ public partial class MainWindow : Window
         }
         Activate();
 
-        new SettingsWindow(_appSettings) { Owner = this }.ShowDialog();
+        if (new SettingsWindow(_appSettings) { Owner = this }.ShowDialog() == true)
+        {
+            // Metric selection may have changed; rebuild the icons and
+            // let the overlay pick up its new list on the next poll.
+            ApplyTrayReadoutSettings();
+        }
     }
 
     private void ApplyOsdSettings()
@@ -279,6 +323,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _trayIcon?.Dispose();
+        _trayMetrics?.Dispose();
         _pollTimer.Stop();
         _monitor.Dispose();
         _osdWindow?.Close();

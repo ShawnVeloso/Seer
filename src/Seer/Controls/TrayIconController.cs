@@ -36,7 +36,12 @@ public sealed class TrayIconController : IDisposable
     /// <summary>The overlay's locked (click-through) state was toggled.</summary>
     public event Action<bool>? LockOsdChanged;
 
-    public TrayIconController(string exePath, bool showOsd, bool lockOsd)
+    /// <summary>The taskbar metric readouts were toggled on or off.</summary>
+    public event Action<bool>? ShowTrayReadoutsChanged;
+
+    private readonly ToolStripMenuItem _trayReadoutsItem;
+
+    public TrayIconController(string exePath, bool showOsd, bool lockOsd, bool showTrayReadouts)
     {
         var menu = new ContextMenuStrip();
 
@@ -49,6 +54,13 @@ public sealed class TrayIconController : IDisposable
         _lockOsdItem = new ToolStripMenuItem("Lock OSD Position") { CheckOnClick = true, Checked = lockOsd };
         _lockOsdItem.Click += (_, _) => LockOsdChanged?.Invoke(_lockOsdItem.Checked);
 
+        _trayReadoutsItem = new ToolStripMenuItem("Show Temps in Taskbar")
+        {
+            CheckOnClick = true,
+            Checked = showTrayReadouts
+        };
+        _trayReadoutsItem.Click += (_, _) => ShowTrayReadoutsChanged?.Invoke(_trayReadoutsItem.Checked);
+
         var settingsItem = new ToolStripMenuItem("Settings...");
         settingsItem.Click += (_, _) => SettingsRequested?.Invoke();
 
@@ -59,6 +71,7 @@ public sealed class TrayIconController : IDisposable
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_showOsdItem);
         menu.Items.Add(_lockOsdItem);
+        menu.Items.Add(_trayReadoutsItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(settingsItem);
         menu.Items.Add(exitItem);

@@ -11,8 +11,9 @@
         Width="500" Height="36"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
     <Border x:Name="RootBorder" Background="Transparent" CornerRadius="0" Padding="10,4">
+        <!-- Content is built as coloured runs in code — see
+             OsdWindow.UpdateStats — so no Text is set here. -->
         <TextBlock x:Name="OsdText"
-                   Text="CPU: --% [--°C] | GPU: --% [--°C] | RAM: --GB/--GB"
                    Foreground="#4dd8ff"
                    FontFamily="JetBrains Mono, Consolas, monospace"
                    FontSize="13"
