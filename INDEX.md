@@ -6,9 +6,9 @@
 ---
 
 ## Current Focus
-- **Working on:** MainWindow split (AGENTS.md §4) — complete
-- **Next up:** editable thresholds + start-with-Windows (+ ThresholdEvaluator tests),
-  then configurable tray-icon/OSD readouts — see MILESTONE.md Tier 2b
+- **Working on:** settings window (thresholds + startup) — complete
+- **Next up:** configurable readouts — temps as taskbar tray icons (Afterburner style)
+  and a Seer-styled OSD strip, both toggled from the tray menu
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -37,6 +37,8 @@
 | Desktop OSD Overlay | ✅ Complete | Interactive (draggable) and Locked (click-through) modes; system tray lifecycle integration |
 | Top Processes Panel | ✅ Complete | Uses `System.Diagnostics.Process` with graceful admin/access denied fallback |
 | Tester packaging | ✅ Complete | Single-file self-contained `.dist/Seer.exe` (~64 MB), icon, versioning, crash logs to `%AppData%` |
+| Settings window | ✅ Complete | Editable load/temp thresholds + start-with-Windows; validated, applies without restart |
+| Unit tests | ✅ Started | `tests/Seer.Tests` — 19 tests over `ThresholdEvaluator` (the only pure-logic component) |
 
 ---
 
@@ -57,6 +59,8 @@
 | `src/Seer/MainWindow.xaml` | Main UI layout — custom chrome title bar, status strip, all panels |
 | `src/Seer/MainWindow.xaml.cs` | Window lifecycle + orchestration — services, poll timer, geometry, tray and OSD ownership |
 | `src/Seer/MainWindow.Panels.cs` | Partial class holding all panel rendering (`Update*Panel`, status badge, history buffers) |
+| `src/Seer/SettingsWindow.xaml(.cs)` | Settings dialog — alert thresholds and start-with-Windows, with validation |
+| `tests/Seer.Tests/` | xUnit project; `ThresholdEvaluatorTests` covers severity boundaries, escalation and missing sensors |
 | `src/Seer/OsdWindow.xaml` / `src/Seer/OsdWindow.xaml.cs` | Desktop OSD overlay with locked (click-through) and unlocked (draggable) modes |
 | `.gitignore` | Standard .NET gitignore (bin/, obj/, .vs/, etc.) |
 | `.agents/rules/seer_design_system.md` | Front-end design reference (colors, typography, layout rules) |
@@ -112,6 +116,7 @@
 | `src/Seer/Services/CrashLogService.cs` | Diagnostics | Writes unhandled exceptions to `%AppData%/Seer/logs`; also hosts `AppVersion` (build identity for UI + reports) |
 | `src/Seer/Services/ElevationService.cs` | Elevation | `IsElevated` and `TryRelaunchElevated()` (UAC relaunch); single source of truth for admin state |
 | `src/Seer/Services/WindowPlacement.cs` | Geometry | `IsOnScreen()` — stops restoring the window onto a disconnected monitor |
+| `src/Seer/Services/StartupService.cs` | Launch at login | HKCU Run key add/remove; deliberately not HKLM, which would auto-start elevated |
 
 ---
 
@@ -156,6 +161,12 @@ dotnet build src/Seer/Seer.csproj
 
 # Run (defaults to non-elevated)
 dotnet run --project src/Seer/Seer.csproj
+
+# Test
+dotnet test tests/Seer.Tests/Seer.Tests.csproj
+
+# Tester build -> .dist/Seer.exe
+dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 ```
 
 ---
@@ -173,6 +184,7 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-06 | Claude | feat: settings window — editable alert thresholds and start-with-Windows, reachable from the title bar and tray; adds Seer.Tests with 19 ThresholdEvaluator tests |
 | 2026-09-06 | Claude | refactor: split MainWindow.xaml.cs (776→321 lines) — rendering to MainWindow.Panels.cs; tray, background grid, elevation and window placement to real classes |
 | 2026-09-06 | Claude | docs: add README.md; correct MILESTONE.md (Tier 2 + network throughput were shipped but unchecked) and log the agreed backlog |
 | 2026-09-06 | Claude | feat: tester packaging — single-file self-contained publish profile, app/tray icon, build version in title bar + crash reports, %AppData% crash logging, RELEASE.md |
@@ -182,4 +194,3 @@ dotnet run --project src/Seer/Seer.csproj
 | 2026-08-19 | Antigravity | feat: implement top processes by CPU/RAM using System.Diagnostics.Process |
 | 2026-08-19 | Antigravity | feat: Desktop OSD Integration — interactive (draggable) and locked (click-through) modes, AppSettings binding, and system tray lifecycle integration |
 | 2026-08-19 | Antigravity | fix: link OSD window to MainWindow lifecycle and wire live stats to update on polling timer |
-| 2026-08-19 | Antigravity | fix: set ShutdownMode to OnMainWindowClose so hidden OSD window doesn't keep app alive |

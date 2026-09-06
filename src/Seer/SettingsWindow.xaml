@@ -1,0 +1,118 @@
+<Window x:Class="Seer.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Seer — Settings"
+        Icon="Assets/seer.ico"
+        Width="420" SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{StaticResource SeerBackground}"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
+
+    <Border BorderBrush="{StaticResource SeerBorder}" BorderThickness="1" Padding="0">
+        <StackPanel Margin="0">
+
+            <!-- Header -->
+            <Border BorderBrush="{StaticResource SeerBorder}" BorderThickness="0,0,0,1" Padding="12,8">
+                <TextBlock Text="[*] SETTINGS" Style="{StaticResource PanelHeaderStyle}" />
+            </Border>
+
+            <!-- ── Thresholds ─────────────────────────────────────────── -->
+            <StackPanel Margin="12,14,12,0">
+                <TextBlock Text="THRESHOLDS" Style="{StaticResource TagStyle}"
+                           Foreground="{StaticResource SeerAccent}" Margin="0,0,0,2" />
+                <TextBlock Style="{StaticResource DimTextStyle}" FontSize="11" TextWrapping="Wrap"
+                           Text="When a metric crosses these, the status badge changes and the crossing is logged to the alert panel."
+                           Margin="0,0,0,10" />
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="72" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Column captions -->
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="WARNING"
+                               Style="{StaticResource TagStyle}"
+                               Foreground="{StaticResource SeerWarning}"
+                               HorizontalAlignment="Center" Margin="0,0,0,4" />
+                    <TextBlock Grid.Row="0" Grid.Column="3" Text="CRITICAL"
+                               Style="{StaticResource TagStyle}"
+                               Foreground="{StaticResource SeerDanger}"
+                               HorizontalAlignment="Center" Margin="0,0,0,4" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Load (CPU / MEM / GPU)  %"
+                               Style="{StaticResource BaseTextStyle}"
+                               VerticalAlignment="Center" Margin="0,0,8,6" />
+                    <TextBox   Grid.Row="1" Grid.Column="1" x:Name="LoadWarningBox"
+                               Style="{StaticResource SeerTextBoxStyle}" Margin="0,0,0,6" />
+                    <TextBox   Grid.Row="1" Grid.Column="3" x:Name="LoadCriticalBox"
+                               Style="{StaticResource SeerTextBoxStyle}" Margin="0,0,0,6" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Temperature (CPU / GPU)  °C"
+                               Style="{StaticResource BaseTextStyle}"
+                               VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox   Grid.Row="2" Grid.Column="1" x:Name="TempWarningBox"
+                               Style="{StaticResource SeerTextBoxStyle}" />
+                    <TextBox   Grid.Row="2" Grid.Column="3" x:Name="TempCriticalBox"
+                               Style="{StaticResource SeerTextBoxStyle}" />
+                </Grid>
+            </StackPanel>
+
+            <!-- ── Startup ────────────────────────────────────────────── -->
+            <StackPanel Margin="12,18,12,0">
+                <TextBlock Text="STARTUP" Style="{StaticResource TagStyle}"
+                           Foreground="{StaticResource SeerAccent}" Margin="0,0,0,8" />
+                <CheckBox x:Name="StartWithWindowsBox"
+                          Style="{StaticResource SeerCheckBoxStyle}"
+                          Content="Start Seer when I sign in" />
+                <TextBlock Style="{StaticResource DimTextStyle}" FontSize="11" TextWrapping="Wrap"
+                           Text="Starts unelevated, so CPU temperature, clock and power will read -- until you choose RUN AS ADMIN."
+                           Margin="22,4,0,0" />
+            </StackPanel>
+
+            <!-- ── Validation message ─────────────────────────────────── -->
+            <TextBlock x:Name="ErrorText"
+                       Style="{StaticResource BaseTextStyle}"
+                       FontSize="11"
+                       Foreground="{StaticResource SeerDanger}"
+                       TextWrapping="Wrap"
+                       Margin="12,14,12,0"
+                       Visibility="Collapsed" />
+
+            <!-- ── Actions ────────────────────────────────────────────── -->
+            <Border BorderBrush="{StaticResource SeerBorder}" BorderThickness="0,1,0,0"
+                    Margin="0,18,0,0" Padding="12,10">
+                <Grid>
+                    <Button Content="RESET TO DEFAULTS"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource SeerActionButtonStyle}"
+                            Click="ResetButton_Click" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="CANCEL"
+                                Style="{StaticResource SeerActionButtonStyle}"
+                                Margin="0,0,8,0"
+                                IsCancel="True"
+                                Click="CancelButton_Click" />
+                        <Button Content="SAVE"
+                                Style="{StaticResource SeerActionButtonStyle}"
+                                IsDefault="True"
+                                Click="SaveButton_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </Border>
+</Window>

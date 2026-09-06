@@ -32,6 +32,7 @@ MainWindow.xaml.cs        lifecycle + orchestration only — services, 1s poll t
                           geometry restore/save, tray + OSD ownership
 MainWindow.Panels.cs      partial: ALL rendering (Update*Panel, status badge, history)
 MainWindow.xaml           the UI itself (~640 lines)
+SettingsWindow.xaml(.cs)  thresholds + start-with-Windows dialog
 OsdWindow.xaml(.cs)       desktop overlay; locked = Win32 click-through, unlocked = draggable
 HudConfig.cs              static bool toggles for aesthetic effects (glow/brackets/grid/hover)
 Controls/HudPanel.cs      panel container w/ corner brackets
@@ -46,6 +47,11 @@ Services/                 all data acquisition, never touches UI
 **Adding a tray menu item** goes in `TrayIconController` (the item + an event);
 `MainWindow.SetupTrayIcon` decides what it *means* and persists it.
 
+**Adding a setting**: a property on `AppSettings` (that's all persistence
+needs), then a field in `SettingsWindow`. Edits mutate the shared
+`AppSettings` instance on Save, so they take effect on the next poll — no
+restart. Cancel must leave the instance untouched.
+
 **Services → what they read**
 
 | Service | Source |
@@ -59,6 +65,7 @@ Services/                 all data acquisition, never touches UI
 | `ThresholdEvaluator` | pure logic; single source of truth for NOMINAL/WARNING/CRITICAL |
 | `ElevationService` | `IsElevated`, `TryRelaunchElevated()` (UAC) |
 | `WindowPlacement` | `IsOnScreen()` — guards restoring onto an unplugged monitor |
+| `StartupService` | HKCU Run key for launch-at-login (never HKLM — that would auto-start elevated) |
 | `CrashLogService` | crash reports + `AppVersion` build identity |
 
 The poll chain, all in `MainWindow.Panels.cs`:
@@ -89,9 +96,18 @@ Unhandled exceptions land in `%AppData%\Seer\logs\crash-<timestamp>.log` via
 `CrashLogService`. Never write a log to a relative path: the UAC relaunch can
 give the process `C:\Windows\System32` as its working directory.
 
-There is **no test suite**. "Tested" means built clean + the lead developer ran
-it, or you state exactly what you observed. Never report a GUI/hardware behavior
+```bash
+dotnet test tests/Seer.Tests/Seer.Tests.csproj
+```
+
+Tests cover `ThresholdEvaluator` only — it's the one piece that's pure logic.
+Everything else still needs the lead developer to run it: "tested" means built
+clean plus exactly what you observed. Never report a GUI or hardware behavior
 as verified when you only compiled it.
+
+To eyeball a dialog without a UAC prompt or a visible window, render its
+content off-screen with `RenderTargetBitmap` — that also proves every
+`StaticResource` key resolves, since a missing one throws on load.
 
 ---
 

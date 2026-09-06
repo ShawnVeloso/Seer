@@ -26,6 +26,15 @@ public class AppSettings
     public double OsdX { get; set; } = double.NaN;
     public double OsdY { get; set; } = double.NaN;
 
+    // --- Startup ---
+
+    /// <summary>
+    /// Mirrors the HKCU Run entry. The registry is the real source of
+    /// truth; this is persisted so the Settings UI can show the intended
+    /// state without a registry read on every open.
+    /// </summary>
+    public bool StartWithWindows { get; set; } = false;
+
     // --- Thresholds (Shared by OSD and Alert logic) ---
     public float LoadWarningThreshold { get; set; } = 85f;
     public float LoadCriticalThreshold { get; set; } = 95f;

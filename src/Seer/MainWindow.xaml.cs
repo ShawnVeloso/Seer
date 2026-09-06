@@ -148,6 +148,8 @@ public partial class MainWindow : Window
             Application.Current.Shutdown();
         };
 
+        _trayIcon.SettingsRequested += OpenSettings;
+
         _trayIcon.ShowOsdChanged += showOsd =>
         {
             _appSettings.ShowOsd = showOsd;
@@ -161,6 +163,24 @@ public partial class MainWindow : Window
             SettingsService.Save(_appSettings);
             ApplyOsdSettings();
         };
+    }
+
+    /// <summary>
+    /// Opens the settings dialog. Edits land on the shared AppSettings
+    /// instance, so new thresholds apply on the next poll — no restart.
+    /// </summary>
+    private void OpenSettings()
+    {
+        // Reachable from the tray while the window is hidden; show it
+        // first so the dialog has something to centre on.
+        if (!IsVisible)
+        {
+            Show();
+            WindowState = WindowState.Normal;
+        }
+        Activate();
+
+        new SettingsWindow(_appSettings) { Owner = this }.ShowDialog();
     }
 
     private void ApplyOsdSettings()
@@ -265,6 +285,11 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 
+
+    private void SettingsButton_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        OpenSettings();
+    }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e)
     {
