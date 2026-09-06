@@ -1,13 +1,13 @@
 # Seer — Agent Log Index
 
 > **Purpose:** Persistent state-tracking for AI agents and the lead developer.
-> **Last Updated:** 2026-08-17T16:14 (+08:00)
+> **Last Updated:** 2026-09-06 (+08:00)
 
 ---
 
 ## Current Focus
-- **Working on:** TBD (Network I/O complete)
-- **Next up:** TBD
+- **Working on:** TBD (tester packaging complete)
+- **Next up:** TBD — remaining MILESTONE.md items (ping/latency, fan speeds, SMART)
 - **Blocked on:** nothing
 
 > This block must always reflect current reality. Update it as the LAST step of
@@ -35,6 +35,7 @@
 | Threshold alerts | ✅ Complete | Extracted `ThresholdEvaluator` as single source of truth; added session-only Alert Log UI panel |
 | Desktop OSD Overlay | ✅ Complete | Interactive (draggable) and Locked (click-through) modes; system tray lifecycle integration |
 | Top Processes Panel | ✅ Complete | Uses `System.Diagnostics.Process` with graceful admin/access denied fallback |
+| Tester packaging | ✅ Complete | Single-file self-contained `.dist/Seer.exe` (~64 MB), icon, versioning, crash logs to `%AppData%` |
 
 ---
 
@@ -56,7 +57,11 @@
 | `src/Seer/OsdWindow.xaml` / `src/Seer/OsdWindow.xaml.cs` | Desktop OSD overlay with locked (click-through) and unlocked (draggable) modes |
 | `.gitignore` | Standard .NET gitignore (bin/, obj/, .vs/, etc.) |
 | `.agents/rules/seer_design_system.md` | Front-end design reference (colors, typography, layout rules) |
+| `src/Seer/Assets/seer.ico` | App + tray icon (multi-size); regenerate with `tools/make-icon.ps1` |
+| `src/Seer/Properties/PublishProfiles/TesterBuild.pubxml` | Publish profile for the tester build (single-file, self-contained, → `.dist/`) |
+| `tools/make-icon.ps1` | Generates `seer.ico` from the design system palette |
 | `AGENTS.md` | Agent rulebook (all project rules in one place) |
+| `RELEASE.md` | How to cut a tester build, what to send testers, known friction |
 | `CLAUDE.md` | Claude-specific working notes — distilled map/conventions + when to read the longer docs |
 | `INDEX.md` | This file — project state, file manifest, log entries |
 | `CHANGELOG.md` | Archive for INDEX.md log entries once they exceed 10 |
@@ -91,6 +96,7 @@
 | `src/Seer/Services/ProcessMonitorService.cs` | Process tracking | Iterates processes to calculate CPU % over time and read RAM; handles AccessDenied gracefully |
 | `src/Seer/Services/DiskMonitorService.cs` | Disk I/O | Uses `PerformanceCounter` to track physical disk read/write throughput |
 | `src/Seer/Services/NetworkMonitorService.cs` | Network I/O | Calculates active Mbps throughput (up/down) via `NetworkInterface` |
+| `src/Seer/Services/CrashLogService.cs` | Diagnostics | Writes unhandled exceptions to `%AppData%/Seer/logs`; also hosts `AppVersion` (build identity for UI + reports) |
 
 ---
 
@@ -149,6 +155,8 @@ dotnet run --project src/Seer/Seer.csproj
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-06 | Claude | feat: tester packaging — single-file self-contained publish profile, app/tray icon, build version in title bar + crash reports, %AppData% crash logging, RELEASE.md |
+| 2026-09-06 | Claude | docs: add CLAUDE.md working notes (distilled map/conventions + when to read the longer docs) |
 | 2026-08-19 | Antigravity | feat: implement network throughput (up/down Mbps) polling using NetworkInterface |
 | 2026-08-19 | Antigravity | feat: implement Disk I/O monitoring using System.Diagnostics.PerformanceCounter |
 | 2026-08-19 | Antigravity | feat: implement top processes by CPU/RAM using System.Diagnostics.Process |
@@ -157,5 +165,3 @@ dotnet run --project src/Seer/Seer.csproj
 | 2026-08-19 | Antigravity | fix: set ShutdownMode to OnMainWindowClose so hidden OSD window doesn't keep app alive |
 | 2026-08-19 | Antigravity | feat: OSD feasibility spike — added transparent topmost window with Win32 click-through |
 | 2026-08-18 | Antigravity | feat: threshold alerts — extracted ThresholdEvaluator, added session-only Alert Log UI panel with state-change logging |
-| 2026-08-18 | Antigravity | feat: settings persistence — window geometry saved/restored via AppSettings + SettingsService; off-screen and corruption fallbacks |
-| 2026-08-18 | Antigravity | fix: use SingleBorderWindow and 8px padding trigger to prevent maximized window taskbar overlap |

@@ -42,6 +42,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        VersionLabel.Text = AppVersion.Display;
+
         _normalBrush = (SolidColorBrush)FindResource("SeerText");
         _warningBrush = (SolidColorBrush)FindResource("SeerWarning");
 

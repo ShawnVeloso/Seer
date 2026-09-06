@@ -13,6 +13,7 @@ work. **Read the source docs only when the trigger below fires.**
 | `AGENTS.md` | Git/branch/merge decisions, rollback incidents, or anything about process authority. Full ruleset. |
 | `.agents/rules/seer_design_system.md` | Touching XAML, colors, typography, layout, or panel chrome. |
 | `MILESTONE.md` | Picking what to build next / scoping a new feature. |
+| `RELEASE.md` | Cutting a build for testers, or changing packaging/versioning. |
 | `CHANGELOG.md` | Archaeology only. Never read to orient. |
 | `graphify-out/GRAPH_REPORT.md` | Last resort for broad architecture questions — the map below is faster. |
 
@@ -62,7 +63,17 @@ Services/              all data acquisition, never touches UI
 ```bash
 dotnet build src/Seer/Seer.csproj      # this is the verification you can actually do
 dotnet run --project src/Seer/Seer.csproj
+
+# Tester build → one self-contained .dist/Seer.exe (~64 MB). See RELEASE.md.
+dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 ```
+
+Bump `<Version>` and `<InformationalVersion>` in the csproj before cutting a
+tester build — that string shows in the title bar and in every crash report.
+
+Unhandled exceptions land in `%AppData%\Seer\logs\crash-<timestamp>.log` via
+`CrashLogService`. Never write a log to a relative path: the UAC relaunch can
+give the process `C:\Windows\System32` as its working directory.
 
 There is **no test suite**. "Tested" means built clean + the lead developer ran
 it, or you state exactly what you observed. Never report a GUI/hardware behavior
