@@ -27,6 +27,9 @@ public sealed class TrayIconController : IDisposable
     /// <summary>The user chose Exit — a real shutdown, not a hide.</summary>
     public event Action? ExitRequested;
 
+    /// <summary>The user asked to open the settings dialog.</summary>
+    public event Action? SettingsRequested;
+
     /// <summary>The desktop overlay was toggled on or off.</summary>
     public event Action<bool>? ShowOsdChanged;
 
@@ -46,6 +49,9 @@ public sealed class TrayIconController : IDisposable
         _lockOsdItem = new ToolStripMenuItem("Lock OSD Position") { CheckOnClick = true, Checked = lockOsd };
         _lockOsdItem.Click += (_, _) => LockOsdChanged?.Invoke(_lockOsdItem.Checked);
 
+        var settingsItem = new ToolStripMenuItem("Settings...");
+        settingsItem.Click += (_, _) => SettingsRequested?.Invoke();
+
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += (_, _) => ExitRequested?.Invoke();
 
@@ -54,6 +60,7 @@ public sealed class TrayIconController : IDisposable
         menu.Items.Add(_showOsdItem);
         menu.Items.Add(_lockOsdItem);
         menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(settingsItem);
         menu.Items.Add(exitItem);
 
         _icon = new NotifyIcon

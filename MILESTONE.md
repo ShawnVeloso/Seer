@@ -33,16 +33,16 @@
   the poll loop, six panel updaters, tray lifecycle, OSD and settings.
   Violates AGENTS.md §4. Blocks the two items below, which would
   otherwise add more code to it.
-- [ ] **Editable thresholds** — `AppSettings` already persists warning and
+- [x] **Editable thresholds** — `AppSettings` already persists warning and
   critical values for load and temp, but nothing in the UI reaches them;
   they can only be changed by hand-editing settings.json.
-- [ ] **Start with Windows** — standard expectation for an always-on tray
+- [x] **Start with Windows** — standard expectation for an always-on tray
   tool.
 - [ ] **Configurable readouts** — temps and other metrics shown as taskbar
   tray icons (MSI Afterburner style) and as a Seer-styled overlay strip,
   each an optional toggle in the tray right-click menu, with a choice of
   which metrics appear.
-- [ ] **Unit tests for `ThresholdEvaluator`** — pure logic, no WPF or
+- [x] **Unit tests for `ThresholdEvaluator`** — pure logic, no WPF or
   hardware; currently the severity/escalation rules can only be checked
   by heating the machine up. Worth having before thresholds become
   user-editable.

@@ -68,6 +68,36 @@
                                    Style="{StaticResource TagStyle}"
                                    VerticalAlignment="Center"
                                    Margin="8,1,0,0" />
+
+                        <!-- Also reachable from the tray menu; here so it's
+                             findable without knowing the tray icon exists. -->
+                        <TextBlock Text="SETTINGS"
+                                   Style="{StaticResource TagStyle}"
+                                   VerticalAlignment="Center"
+                                   Margin="16,1,0,0"
+                                   Cursor="Hand"
+                                   ToolTip="Alert thresholds and startup"
+                                   WindowChrome.IsHitTestVisibleInChrome="True"
+                                   MouseLeftButtonUp="SettingsButton_Click">
+                            <TextBlock.Triggers>
+                                <EventTrigger RoutedEvent="MouseEnter">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                                            To="{StaticResource AccentColor}" Duration="0:0:0.120" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="MouseLeave">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                                            To="{StaticResource TextDimColor}" Duration="0:0:0.120" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </TextBlock.Triggers>
+                        </TextBlock>
                     </StackPanel>
 
                     <!-- Window controls -->

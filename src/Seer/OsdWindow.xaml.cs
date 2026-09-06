@@ -24,7 +24,7 @@ public partial class OsdWindow : Window
             Left = SystemParameters.PrimaryScreenWidth - Width - 20;
             Top = 20;
         }
-        else if (IsOnScreen(_settings.OsdX, _settings.OsdY, Width, Height))
+        else if (WindowPlacement.IsOnScreen(_settings.OsdX, _settings.OsdY, Width, Height))
         {
             Left = _settings.OsdX;
             Top = _settings.OsdY;
@@ -36,23 +36,6 @@ public partial class OsdWindow : Window
         }
         
         LocationChanged += OsdWindow_LocationChanged;
-    }
-
-    private static bool IsOnScreen(double left, double top, double width, double height)
-    {
-        const double margin = 50;
-        var windowRect = new System.Drawing.Rectangle((int)left, (int)top, (int)width, (int)height);
-
-        foreach (var screen in System.Windows.Forms.Screen.AllScreens)
-        {
-            var workArea = screen.WorkingArea;
-            if (windowRect.Right > workArea.Left + margin && windowRect.Left < workArea.Right - margin &&
-                windowRect.Bottom > workArea.Top + margin && windowRect.Top < workArea.Bottom - margin)
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
     // ── Win32 interop ──────────────────────────────────────────────────

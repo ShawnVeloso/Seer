@@ -207,4 +207,120 @@
         <Setter Property="Height" Value="4" />
     </Style>
 
+    <!-- ══ Input controls ══════════════════════════════════════════════
+         Added for the Settings window. Sharp corners and hairline
+         borders, per the design system: structure is never rounded. -->
+
+    <Style x:Key="SeerTextBoxStyle" TargetType="TextBox">
+        <Setter Property="FontFamily" Value="{StaticResource SeerFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource SeerText}" />
+        <Setter Property="CaretBrush" Value="{StaticResource SeerAccent}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource SeerAccent}" />
+        <Setter Property="Background" Value="{StaticResource SeerBackground}" />
+        <Setter Property="BorderBrush" Value="{StaticResource SeerBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="6,3" />
+        <Setter Property="TextAlignment" Value="Right" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="0">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Margin="{TemplateBinding Padding}"
+                                      VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource SeerTextDim}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource SeerBorderActive}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SeerCheckBoxStyle" TargetType="CheckBox">
+        <Setter Property="FontFamily" Value="{StaticResource SeerFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource SeerText}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="Box"
+                                Width="14" Height="14"
+                                CornerRadius="0"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource SeerBorder}"
+                                Background="{StaticResource SeerBackground}"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="Mark"
+                                       Text="×"
+                                       FontFamily="{StaticResource SeerFontFamily}"
+                                       FontSize="13"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource SeerAccent}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Margin="0,-2,0,0"
+                                       Visibility="Collapsed" />
+                        </Border>
+                        <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Mark" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource SeerAccent}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource SeerBorderActive}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Text-style action button (SAVE / CANCEL) -->
+    <Style x:Key="SeerActionButtonStyle" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource SeerFontFamily}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource SeerTextDim}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="14,6" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            CornerRadius="0"
+                            BorderThickness="1"
+                            BorderBrush="{StaticResource SeerBorder}"
+                            Background="Transparent"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource SeerAccent}" />
+                            <Setter Property="Foreground" Value="{StaticResource SeerAccent}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#1A4DD8FF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>
