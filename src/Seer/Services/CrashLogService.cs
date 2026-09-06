@@ -86,22 +86,8 @@ public static class AppVersion
     /// <summary>Same value prefixed for display, e.g. "v0.1.0-alpha".</summary>
     public static string Display => $"v{Full}";
 
-    public static bool IsElevated
-    {
-        get
-        {
-            try
-            {
-                using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
-                return new System.Security.Principal.WindowsPrincipal(identity)
-                    .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-    }
+    /// <summary>Whether this process is elevated — see <see cref="ElevationService"/>.</summary>
+    public static bool IsElevated => ElevationService.IsElevated;
 
     private static string ReadInformationalVersion()
     {
