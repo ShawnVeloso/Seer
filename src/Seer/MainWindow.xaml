@@ -228,11 +228,18 @@
                  their content (Auto rows) rather than sharing leftover
                  space, which is what previously crushed the CPU panel. -->
             <ScrollViewer Grid.Row="2"
-                          Margin="12"
+                          Margin="12,4,12,12"
                           Style="{StaticResource SeerScrollViewerStyle}"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-            <Grid>
+            <!-- The top slack is inside the scrolled content, not on the
+                 ScrollViewer. A panel's title sits ON its top border line, so
+                 the header overhangs the panel by half its height; on the top
+                 row that overhang fell outside the viewport and the titles of
+                 [1] and [2] were sliced through the middle even at scroll
+                 offset zero. The 2px at the bottom clears the corner brackets,
+                 which overhang by 1px the same way. -->
+            <Grid Margin="0,8,0,2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="12" /> <!-- Gap -->

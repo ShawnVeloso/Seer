@@ -51,6 +51,23 @@ public class ChamferShape : Shape
         _cached = null;
     }
 
+    /// <summary>
+    /// Chrome, never a layout participant: the shape is whatever outline its
+    /// container ends up with, so it asks for nothing and the container is
+    /// sized by its real content.
+    ///
+    /// <see cref="Shape"/> would otherwise measure <see cref="DefiningGeometry"/>,
+    /// and this geometry is built from <see cref="UIElement.RenderSize"/> — the
+    /// size the *previous* arrange handed us. That makes the desired size a
+    /// function of the last arrange, and because a panel is arranged a pixel
+    /// taller than it asks for (an Auto grid row rounds up), every measure pass
+    /// returned a panel one pixel taller than the pass before. Changing
+    /// <see cref="Shape.Stroke"/> is AffectsMeasure, so hovering a panel *is* a
+    /// measure pass: panels grew 1px per hover, and a collapsed panel kept the
+    /// height it had while it was open. Measured: +1px per hover, unbounded.
+    /// </summary>
+    protected override Size MeasureOverride(Size constraint) => new Size(0, 0);
+
     protected override Geometry DefiningGeometry => BuildGeometry();
 
     private Geometry BuildGeometry()

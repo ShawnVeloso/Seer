@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Seer.Models;
 
 namespace Seer;
 
@@ -98,7 +99,60 @@ internal static class RenderShot
             encoder.Save(stream);
         }
 
+        RenderOsd(outputDir);
+
         return outputDir;
+    }
+
+    /// <summary>
+    /// The desktop overlay, in both lock states. It is a separate window that
+    /// the main shot never touched, which is how it kept a hardcoded accent
+    /// through a retheme: nothing rendered it, so nothing caught the drift.
+    /// Readings are synthetic — the point is the chrome and the severity
+    /// colours, and one of each has to be on screen to be checked.
+    /// </summary>
+    private static void RenderOsd(string outputDir)
+    {
+        var cpu = new CpuMetrics { Temperature = 91f, TotalLoad = 96f, Clock = 4820f, Power = 142f };
+        var gpu = new GpuMetrics { Temperature = 74f, Load = 62f, VramUsedGb = 6.2f, VramTotalGb = 12f };
+        var mem = new MemoryMetrics { UsedGb = 26.3f, AvailableGb = 5.6f, Load = 82.4f };
+
+        foreach (var locked in new[] { false, true })
+        {
+            var settings = new AppSettings { ShowOsd = true, LockOsd = locked };
+            var osd = new OsdWindow(settings);
+            osd.UpdateStats(cpu, gpu, mem);
+
+            if (osd.Content is not FrameworkElement content)
+                throw new InvalidOperationException("OsdWindow.Content is not a FrameworkElement.");
+
+            // The strip sizes itself to whichever metrics are selected, so
+            // measure it unconstrained and take the size it asks for.
+            content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            var width = (int)Math.Ceiling(content.DesiredSize.Width);
+            var height = (int)Math.Ceiling(content.DesiredSize.Height);
+
+            content.Arrange(new Rect(0, 0, width, height));
+            content.UpdateLayout();
+
+            // A mid-grey ground: the overlay is transparent by design, and on
+            // a transparent surface neither the ground tint nor the locked
+            // state's absence of chrome can be judged.
+            var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            var ground = new DrawingVisual();
+            using (var dc = ground.RenderOpen())
+                dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0x3A, 0x3A, 0x42)), null, new Rect(0, 0, width, height));
+
+            bitmap.Render(ground);
+            bitmap.Render(content);
+
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+
+            var path = Path.Combine(outputDir, $"seer-osd-{(locked ? "locked" : "unlocked")}.png");
+            using var stream = File.Create(path);
+            encoder.Save(stream);
+        }
     }
 
     /// <summary>
