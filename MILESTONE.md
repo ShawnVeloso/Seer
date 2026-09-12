@@ -69,17 +69,28 @@
 - [x] **Network throughput (up/down Mbps)** — shipped; `NetworkInterface`
   byte counters sampled between polls, as anticipated.
 
-## Tier 4 — Higher effort / hardware-dependent (may not be reliably available)
+## Tier 4 — Higher effort / hardware-dependent
 
-- [ ] **Fan speeds beyond GPU** (case fans, CPU fan) — depends on your
-  specific motherboard's SuperIO chip being supported by
-  LibreHardwareMonitorLib. Hit-or-miss per machine; needs an early
-  feasibility check (smoke test) before committing to full UI work.
-- [ ] **Motherboard/VRM temps** — same hardware-support caveat as above.
-- [ ] **Disk health/SMART data** (temp, wear level) — typically needs deeper
-  low-level access than basic sensor reads; may hit elevation
-  requirements similar to CPU thermals, worth an early spike to confirm
-  scope before treating as a normal task.
+Disk health shipped. The other two are **dumped** — see below.
+
+---
+
+## Dumped — not planned
+
+Kept here rather than deleted so the reasoning doesn't get re-litigated.
+Reopen either if the situation in the note changes.
+
+- **Fan speeds beyond GPU** (case fans, CPU fan) — dumped 2026-09-13.
+  Needs the motherboard's SuperIO chip to be supported by
+  LibreHardwareMonitorLib, which is hit-or-miss per machine and per BIOS
+  revision. The payoff is a reading that silently vanishes on a tester's
+  board with no way for Seer to explain why, and the GPU fan — the one that
+  actually moves under load — is already covered. Reopen if LHM's SuperIO
+  coverage becomes something we can detect and report on rather than guess.
+- **Motherboard / VRM temps** — dumped 2026-09-13. Same SuperIO dependency,
+  same silent-absence problem, and a weaker case: VRM temperature is a
+  number very few people can act on. Reopen alongside fan speeds, since
+  whatever makes one viable makes the other viable.
 
 ---
 
@@ -111,3 +122,8 @@
   tape, launch report; plus trend arrows, session I/O totals, per-chart
   min/avg/max, relative event times, the session event log and inline meters.
   Each behind its own `HudConfig` flag
+- [x] Disk health / SMART — Windows' own per-drive verdict via
+  `MSFT_PhysicalDisk` (works non-elevated), with temperature, wear and
+  lifetime writes layered on from LibreHardwareMonitorLib when elevated.
+  Refreshed on a slow background loop, not the poll. The spike that scoped
+  it is recorded in INDEX.md
