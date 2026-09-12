@@ -154,6 +154,11 @@ content off-screen with `RenderTargetBitmap` — that also proves every
   `ScrollViewer` and every panel row is `Auto`, so panels ask for the
   height they need and the area scrolls; a new panel can't squeeze an
   existing one.
+- **Per-core bars are composed as whole rows of text**, not one item per
+  core: threads read top-to-bottom down each column, which needs the row
+  count known before the text is built. Monospace + fixed 13-character
+  cells means the columns align by construction. `CoreColumnCount` picks
+  the column count from the panel's measured width each poll.
 - **Never put a `UniformGrid`, or anything that divides space equally, in a
   `*` row.** It takes whatever height it's handed and never asks for more,
   so when space runs short its children silently *overlap* rather than

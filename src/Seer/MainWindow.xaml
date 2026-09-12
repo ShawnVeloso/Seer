@@ -292,25 +292,23 @@
 
                         <!-- Per-core load bars -->
                         <!-- Per-core load bars.
-                             A WrapPanel, not a UniformGrid: a UniformGrid
-                             splits whatever height it is handed equally
-                             between its rows and never asks for more, so
-                             in a short row the lines overlap. These items
-                             keep their natural size and reflow instead —
-                             four across at normal width, fewer when the
-                             window is narrowed. -->
+                             Each item is one whole ROW of text, composed in
+                             UpdateCpuPanel from fixed-width cells. Threads
+                             read top-to-bottom down each column, which a
+                             panel of individual items can't do while also
+                             reflowing — and because the font is monospace
+                             and every cell is exactly 13 characters, the
+                             columns align by construction rather than by
+                             layout. The default vertical StackPanel gives
+                             each row its natural height, so nothing can
+                             overlap however short the panel gets. -->
                         <ItemsControl x:Name="CpuCoreBarsControl" Grid.Row="2" Margin="12,10,12,10">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding}"
                                                Style="{StaticResource BaseTextStyle}"
                                                FontSize="12"
-                                               Margin="0,0,6,2"
+                                               Margin="0,0,0,2"
                                                Foreground="{StaticResource SeerTextDim}" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -698,9 +696,14 @@
                                             <TextBlock Grid.Column="1" Text="{Binding MetricName}" Style="{StaticResource BaseTextStyle}" VerticalAlignment="Center" />
                                             <TextBlock Grid.Column="2" Text="{Binding FormattedValue}" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
                                             
+                                            <!-- 4px, matching the status badge in the
+                                                 status strip. The design system allows
+                                                 status indicators the only exception to
+                                                 the sharp-corners rule, but specifies
+                                                 slight rounding — not a full capsule. -->
                                             <Border Grid.Column="3" 
                                                     BorderThickness="1" 
-                                                    CornerRadius="9999" 
+                                                    CornerRadius="4" 
                                                     Padding="8,1" 
                                                     HorizontalAlignment="Right">
                                                 <Border.Style>
