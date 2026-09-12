@@ -103,3 +103,11 @@
 - [x] Settings window (editable thresholds, start with Windows)
 - [x] Configurable readouts (taskbar tray icons + OSD strip)
 - [x] Ping / latency panel with start-stop control
+- [x] HUD restyle, direction C — inset panel titles, chamfered corners, dot
+  lattice, drawn log-scale meters, per-core matrix with heat and peak-hold.
+  Supersedes the earlier "HUD polish pass" line above
+- [x] Living details — heartbeat, chart write-head, peak holds, severity edges,
+  activity LEDs, rank marks, status line, time graticule, per-core heat, ping
+  tape, launch report; plus trend arrows, session I/O totals, per-chart
+  min/avg/max, relative event times, the session event log and inline meters.
+  Each behind its own `HudConfig` flag

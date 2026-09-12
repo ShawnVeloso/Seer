@@ -1,31 +1,59 @@
 <UserControl x:Class="Seer.Controls.TrendChart"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:controls="clr-namespace:Seer.Controls"
-             mc:Ignorable="d" 
-             d:DesignHeight="60" d:DesignWidth="200"
+             mc:Ignorable="d"
+             d:DesignHeight="64" d:DesignWidth="200"
              SizeChanged="UserControl_SizeChanged">
-    
-    <controls:HudPanel Padding="0">
+
+    <!-- The chart's title and its session figures live on the panel's border
+         line like every other panel, rather than floating over the plot. -->
+    <controls:HudPanel x:Name="ChartPanel" Padding="0" Chamfer="8">
         <Grid>
-            <!-- Title -->
-            <TextBlock x:Name="ChartTitle" 
-                       Text="CHART" 
-                       Style="{StaticResource TagStyle}" 
-                       Margin="8,6,8,0"
-                       VerticalAlignment="Top" 
-                       HorizontalAlignment="Left"
-                       Panel.ZIndex="1"/>
-                       
-            <!-- Graph Canvas -->
-            <!-- ClipToBounds="False" so the glow effect isn't clipped at the edges -->
-            <Canvas x:Name="ChartCanvas" ClipToBounds="False" Margin="0,16,0,0">
-                <Polyline x:Name="ChartLine" 
-                          StrokeThickness="2"
+            <!-- ClipToBounds="False" so the halo stroke isn't cut at the edges -->
+            <Canvas x:Name="ChartCanvas" ClipToBounds="False" Margin="0,2,0,0">
+                <!-- Time graticule: one line per :00 and :30 of the wall
+                     clock, scrolling left with the samples. -->
+                <Path x:Name="Graticule"
+                      Stroke="{StaticResource SeerBorder}"
+                      StrokeThickness="1"
+                      Opacity="0.6" />
+
+                <Line x:Name="SessionPeakLine"
+                      Stroke="{StaticResource SeerPeak}"
+                      StrokeThickness="1"
+                      StrokeDashArray="2 3"
+                      Opacity="0.55"
+                      Visibility="Collapsed" />
+
+                <!-- The halo: a wider, low-opacity copy of the line beneath
+                     it. Cheaper than a DropShadowEffect and it shares the
+                     same point collection. -->
+                <Polyline x:Name="ChartHalo"
+                          StrokeThickness="6"
+                          Opacity="0.18"
                           StrokeLineJoin="Round" />
+
+                <Polyline x:Name="ChartLine"
+                          StrokeThickness="1.5"
+                          StrokeLineJoin="Round" />
+
+                <!-- Write-head: where "now" is on the trend. -->
+                <Ellipse x:Name="WriteHead"
+                         Width="5" Height="5"
+                         Fill="{StaticResource SeerPeak}"
+                         Visibility="Collapsed" />
             </Canvas>
+
+            <TextBlock x:Name="WriteHeadLabel"
+                       Style="{StaticResource TagStyle}"
+                       Foreground="{StaticResource SeerText}"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Top"
+                       Margin="0,0,8,0"
+                       Panel.ZIndex="1" />
         </Grid>
     </controls:HudPanel>
 </UserControl>

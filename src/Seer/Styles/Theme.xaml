@@ -5,7 +5,7 @@
     <!-- ═══════════════════════════════════════════════════════════════
          Seer Design System — WPF Resource Dictionary
          Source of truth: seer_design_system.md
-         
+
          All colors, typography, and structural styles live here.
          Never hardcode hex values in individual XAML files — reference
          these resources instead.
@@ -42,6 +42,39 @@
     <SolidColorBrush x:Key="SeerSuccess" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="SeerWarning" Color="{StaticResource WarningColor}" />
     <SolidColorBrush x:Key="SeerDanger" Color="{StaticResource DangerColor}" />
+
+    <!-- ── Peak / event accent ──
+         Magenta, reserved for peak-hold ticks and event timestamps. Never a
+         fill, never a border: it sits between the GPU channel's violet and
+         the critical red, so anything larger than a 1px tick or a 9px
+         timestamp starts reading as a third alarm colour. -->
+    <Color x:Key="PeakColor">#FFFF4FB0</Color>
+    <SolidColorBrush x:Key="SeerPeak" Color="{StaticResource PeakColor}" />
+    <SolidColorBrush x:Key="SeerPeakTint" Color="#26FF4FB0" />
+
+    <!-- ── Tints ──
+         10% washes for badge and tab backgrounds. The severity tints replace
+         hand-written literals (#1AF59E0B, #1AEF4444) that had drifted from
+         the very tokens they were meant to be derived from. -->
+    <SolidColorBrush x:Key="SeerAccentTint" Color="#1A4DD8FF" />
+    <SolidColorBrush x:Key="SeerSuccessTint" Color="#1A3DDC84" />
+    <SolidColorBrush x:Key="SeerWarningTint" Color="#1AFFB020" />
+    <SolidColorBrush x:Key="SeerDangerTint" Color="#1AFF5C5C" />
+
+    <!-- ── Halos ──
+         The soft outer light, drawn as a wider low-opacity stroke beneath the
+         real one rather than as a DropShadowEffect. An effect forces an
+         intermediate render target every time its subtree invalidates, which
+         on a chart that redraws every second is a recurring cost for what
+         looks like a static glow. -->
+    <SolidColorBrush x:Key="SeerAccentHalo" Color="#2E4DD8FF" />
+    <SolidColorBrush x:Key="SeerWarningHalo" Color="#2EFFB020" />
+    <SolidColorBrush x:Key="SeerDangerHalo" Color="#2EFF5C5C" />
+
+    <!-- The unfilled part of a meter. Dim enough to read as a track rather
+         than as data, bright enough that an idle meter still looks like one
+         instead of looking broken. -->
+    <SolidColorBrush x:Key="SeerMeterTrack" Color="#FF34343B" />
 
     <!-- ── Typography ── -->
     <!--
@@ -80,6 +113,25 @@
         <Setter Property="Foreground" Value="{StaticResource SeerTextDim}" />
     </Style>
 
+    <!-- Panel title and meta sit ON the top border line rather than in a row
+         below it. Each carries the panel background as a knockout: the border
+         passes behind the text and the backplate hides the segment it would
+         otherwise strike through. -->
+    <Style x:Key="PanelTitleStyle" TargetType="TextBlock" BasedOn="{StaticResource BaseTextStyle}">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource SeerTextDim}" />
+        <Setter Property="Background" Value="{StaticResource SeerPanel}" />
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="PanelMetaStyle" TargetType="TextBlock" BasedOn="{StaticResource TagStyle}">
+        <Setter Property="Background" Value="{StaticResource SeerPanel}" />
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
     <!-- Wordmark style for "SEER" in the title bar -->
     <Style x:Key="WordmarkStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource SeerFontFamily}" />
@@ -91,54 +143,147 @@
 
     <!-- ── Structural Styles ── -->
 
-    <!-- Panel container: flat, 1px border, 0px radius -->
-    <Style x:Key="PanelStyle" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource SeerPanel}" />
-        <Setter Property="BorderBrush" Value="{StaticResource SeerBorder}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="0" />
-    </Style>
+    <!-- HudPanel: the chrome every panel wears.
 
-    <!-- HudPanel container: adds brackets and hover glow capability to PanelStyle -->
+         The title and meta sit ON the top border line instead of in a row
+         beneath it, which gives back roughly a header row per panel across
+         nine panels. The top-right corner is cut at 45°, so the outline is a
+         ChamferShape rather than a Border — a Border can round a corner but
+         cannot cut one.
+
+         Every state colour here is a StaticResource resolved when the theme
+         loads. The control itself resolves nothing by string, so a renamed
+         token fails loudly at load instead of silently the first time a panel
+         is hovered. -->
     <Style TargetType="{x:Type controls:HudPanel}">
+        <Setter Property="EdgeBrush" Value="{StaticResource SeerBorder}" />
+        <Setter Property="AccentBrush" Value="{StaticResource SeerBorderActive}" />
+        <Setter Property="HaloBrush" Value="Transparent" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:HudPanel}">
                     <Grid>
-                        <!-- Glow Border (Sits beneath, takes the effect so text stays hardware-accelerated) -->
-                        <Border Background="{StaticResource SeerPanel}" 
-                                BorderThickness="1" 
-                                CornerRadius="0">
-                            <Border.Effect>
-                                <DropShadowEffect x:Name="HoverGlow" 
-                                                  Color="{StaticResource BorderActiveColor}" 
-                                                  BlurRadius="12" 
-                                                  ShadowDepth="0" 
-                                                  Opacity="0" />
-                            </Border.Effect>
-                        </Border>
+                        <!-- Halo: a wider, low-opacity outline beneath the real
+                             one. Transparent until something lights it up. -->
+                        <controls:ChamferShape x:Name="PART_Halo"
+                                               Chamfer="{TemplateBinding Chamfer}"
+                                               Stroke="{TemplateBinding HaloBrush}"
+                                               StrokeThickness="3" />
 
-                        <!-- Main Border (Holds content, crisp rendering) -->
-                        <Border x:Name="MainBorder" 
-                                Background="{StaticResource SeerPanel}" 
-                                BorderBrush="{StaticResource SeerBorder}" 
-                                BorderThickness="1" 
-                                CornerRadius="0">
-                            <ContentPresenter />
-                        </Border>
+                        <controls:ChamferShape x:Name="PART_Edge"
+                                               Chamfer="{TemplateBinding Chamfer}"
+                                               Fill="{StaticResource SeerPanel}"
+                                               Stroke="{TemplateBinding EdgeBrush}"
+                                               StrokeThickness="1" />
 
-                        <!-- Corner Brackets -->
-                        <Grid x:Name="BracketGrid">
-                            <!-- Top Left -->
-                            <Path Stroke="{StaticResource SeerBorderActive}" StrokeThickness="2" Data="M 0,8 L 0,0 L 8,0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-2,-2,0,0" />
-                            <!-- Top Right -->
-                            <Path Stroke="{StaticResource SeerBorderActive}" StrokeThickness="2" Data="M 0,0 L 8,0 L 8,8" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-2,-2,0" />
-                            <!-- Bottom Left -->
-                            <Path Stroke="{StaticResource SeerBorderActive}" StrokeThickness="2" Data="M 0,-8 L 0,0 L 8,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-2,0,0,-2" />
-                            <!-- Bottom Right -->
-                            <Path Stroke="{StaticResource SeerBorderActive}" StrokeThickness="2" Data="M -8,0 L 0,0 L 0,-8" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-2,-2" />
+                        <!-- The top margin clears the header line, which is
+                             centred on the top edge. -->
+                        <ContentPresenter x:Name="PART_Content" Margin="1,9,1,1" />
+
+                        <!-- Corner brackets, hidden until they mean something:
+                             hover, or a panel whose readings left nominal.
+                             There is no top-right bracket — the chamfer has
+                             that corner. -->
+                        <Grid x:Name="BracketGrid" Opacity="0">
+                            <Path Stroke="{TemplateBinding AccentBrush}" StrokeThickness="1" Data="M 0,6 L 0,0 L 6,0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-1,-1,0,0" />
+                            <Path Stroke="{TemplateBinding AccentBrush}" StrokeThickness="1" Data="M 0,-6 L 0,0 L 6,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-1,0,0,-1" />
+                            <Path Stroke="{TemplateBinding AccentBrush}" StrokeThickness="1" Data="M -6,0 L 0,0 L 0,-6" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-1,-1" />
+                        </Grid>
+
+                        <!-- Header line: index and title on the left, meta and
+                             any panel-specific control on the right, each
+                             knocking a gap in the border it sits on. The right
+                             margin clears the chamfer. Background is explicitly
+                             Transparent so the whole strip is hit-testable for
+                             collapsible panels. -->
+                        <Grid x:Name="PART_HeaderLine"
+                              VerticalAlignment="Top"
+                              Height="14"
+                              Margin="10,-7,16,0"
+                              Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        Background="{StaticResource SeerPanel}">
+                                <Border x:Name="PART_IndexTab"
+                                        Background="{StaticResource SeerAccentTint}"
+                                        Padding="3,0">
+                                    <TextBlock Text="{TemplateBinding IndexTag}"
+                                               Style="{StaticResource TagStyle}"
+                                               Foreground="{StaticResource SeerAccent}"
+                                               VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="{TemplateBinding Header}"
+                                           Style="{StaticResource PanelTitleStyle}" />
+                                <Path x:Name="Expander"
+                                      Data="M 0,0 L 4,3.5 L 0,7 Z"
+                                      Fill="{StaticResource SeerTextDim}"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,6,0"
+                                      Visibility="Collapsed"
+                                      RenderTransformOrigin="0.5,0.5" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2"
+                                        Orientation="Horizontal"
+                                        Background="{StaticResource SeerPanel}">
+                                <TextBlock Text="{TemplateBinding Meta}"
+                                           Style="{StaticResource PanelMetaStyle}" />
+                                <ContentPresenter Content="{TemplateBinding HeaderContent}"
+                                                  VerticalAlignment="Center" />
+                            </StackPanel>
                         </Grid>
                     </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <!-- A collapsed panel keeps its header line and loses
+                             its body, so the row shrinks to a titled rule. -->
+                        <Trigger Property="IsExpanded" Value="False">
+                            <Setter TargetName="PART_Content" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsExpandable" Value="True">
+                            <Setter TargetName="Expander" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsExpandable" Value="True" />
+                                <Condition Property="IsExpanded" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Expander" Property="RenderTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="90" />
+                                </Setter.Value>
+                            </Setter>
+                        </MultiTrigger>
+
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="EdgeBrush" Value="{StaticResource SeerBorderActive}" />
+                            <Setter Property="AccentBrush" Value="{StaticResource SeerBorderActive}" />
+                            <Setter Property="HaloBrush" Value="{StaticResource SeerAccentHalo}" />
+                            <Setter TargetName="BracketGrid" Property="Opacity" Value="1" />
+                        </Trigger>
+
+                        <!-- Severity outranks hover: a warning panel stays
+                             amber under the cursor rather than reverting to
+                             the hover colour and hiding its own state. -->
+                        <Trigger Property="Severity" Value="Warning">
+                            <Setter Property="EdgeBrush" Value="{StaticResource SeerWarning}" />
+                            <Setter Property="AccentBrush" Value="{StaticResource SeerWarning}" />
+                            <Setter Property="HaloBrush" Value="{StaticResource SeerWarningHalo}" />
+                            <Setter TargetName="BracketGrid" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <Trigger Property="Severity" Value="Critical">
+                            <Setter Property="EdgeBrush" Value="{StaticResource SeerDanger}" />
+                            <Setter Property="AccentBrush" Value="{StaticResource SeerDanger}" />
+                            <Setter Property="HaloBrush" Value="{StaticResource SeerDangerHalo}" />
+                            <Setter TargetName="BracketGrid" Property="Opacity" Value="1" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -198,13 +343,6 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-    </Style>
-
-    <!-- Status strip bar background (the track behind percentage bars) -->
-    <Style x:Key="StatusBarTrackStyle" TargetType="Border">
-        <Setter Property="Background" Value="#15FFFFFF" />
-        <Setter Property="CornerRadius" Value="0" />
-        <Setter Property="Height" Value="4" />
     </Style>
 
     <!-- ══ Input controls ══════════════════════════════════════════════
@@ -315,7 +453,7 @@
                             <Setter Property="Foreground" Value="{StaticResource SeerAccent}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#1A4DD8FF" />
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource SeerAccentTint}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

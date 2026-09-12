@@ -30,20 +30,37 @@ Everything lives under `src/Seer/`. Flat by design — no deep nesting.
 App.xaml(.cs)             entry point, merges Theme.xaml, ShutdownMode=OnMainWindowClose
 MainWindow.xaml.cs        lifecycle + orchestration only — services, 1s poll timer,
                           geometry restore/save, tray + OSD ownership
-MainWindow.Panels.cs      partial: ALL rendering (Update*Panel, status badge, history)
-MainWindow.xaml           the UI itself (~640 lines)
+MainWindow.Panels.cs      partial: readings → elements (Update*Panel, badge, history)
+MainWindow.Living.cs      partial: the parts that MOVE (heartbeat, status line, LEDs,
+                          trend arrows). Driven by the poll, never by their own timer
+MainWindow.xaml           the UI itself
 SettingsWindow.xaml(.cs)  thresholds + start-with-Windows dialog
 OsdWindow.xaml(.cs)       desktop overlay; locked = Win32 click-through, unlocked = draggable
-HudConfig.cs              static bool toggles for aesthetic effects (glow/brackets/grid/hover)
-Controls/HudPanel.cs      panel container w/ corner brackets
-Controls/TrendChart       120-sample rolling sparkline
+HudConfig.cs              per-effect toggles + MotionAllowed, the single animation gate
+RenderShot.cs             --render-shot: renders the window off-screen to PNG and exits
+Controls/HudPanel.cs      panel chrome: inset title, chamfer, severity-driven brackets
+Controls/ChamferShape.cs  the 45° cut corner (a Border cannot cut one)
+Controls/SegmentMeter.cs  EVERY bar in the app; linear or log scale, ticks, peak mark
+Controls/CoreMatrix.cs    per-core block; owns its own column layout in MeasureOverride
+Controls/PingTape.cs      one bar per ping reply, red hairline for a loss
+Controls/Pulse.cs         the ONLY place an animation starts
+Controls/TrendChart       120-sample rolling sparkline + halo, write-head, graticule
 Controls/TrayIconController  owns NotifyIcon + context menu, raises events
 Controls/TrayMetricIcons  numbers drawn into taskbar icons (Afterburner style)
-Controls/HudBackground.cs the 40px grid brush
-Styles/Theme.xaml         ALL design tokens (SeerAccent, SeerWarning, PanelStyle, …)
+Controls/HudBackground.cs the 24px dot lattice brush
+Styles/Theme.xaml         ALL design tokens (SeerAccent, SeerWarning, SeerPeak, …)
 Models/                   immutable records only, no logic
-Services/                 all data acquisition, never touches UI
+Services/                 data acquisition + the pure per-poll maths, never touches UI
+                          (PeakHold, SeverityHold, SlopeTracker, SessionStats,
+                           RateIntegrator, PollClock, SessionLog, ProcessRankTracker)
 ```
+
+**Seeing the UI without running it**: `dotnet run --project src/Seer/Seer.csproj
+-- --render-shot <dir>` renders the window off-screen at three sizes and exits.
+A clean build proves nothing about XAML — WPF resolves `StaticResource` keys and
+template triggers at *load*, so a missing key is a runtime crash. If the shot is
+written, every key in the tree resolved. It caught a `SegmentMeter` static-ctor
+crash and a `DrawingBrush` with no `Viewbox` that painted the whole window grey.
 
 **Adding a tray menu item** goes in `TrayIconController` (the item + an event);
 `MainWindow.SetupTrayIcon` decides what it *means* and persists it.
@@ -130,9 +147,17 @@ content off-screen with `RenderTargetBitmap` — that also proves every
   theme resources in the constructor — `FindResource("SeerText")`, don't
   re-resolve per tick.
 - **Never hardcode a color/font in XAML.** Use a `Theme.xaml` key
-  (`SeerAccent`, `SeerWarning`, `SeerDanger`, `SeerTextDim`, `PanelStyle`,
-  `PanelHeaderStyle`…). Panels: `0px` radius, hairline `SeerBorder`, header
-  numbered `[4] DISK`. Numeric readouts are monospace + tabular.
+  (`SeerAccent`, `SeerWarning`, `SeerDanger`, `SeerTextDim`, `SeerPeak`,
+  `PanelTitleStyle`…). Panels: `0px` radius, hairline `SeerBorder`, title set
+  *into* the top border numbered `[4] DISK`, with a real fact right-aligned on
+  the same line. Numeric readouts are monospace + tabular.
+- **`SeerPeak` (magenta) is reserved** for peak-hold ticks, chart write-heads
+  and event timestamps. Never a fill, never a border — it sits between the GPU
+  violet and the critical red and turns into a third alarm colour at any size.
+- **Anything that moves must name the reading that drives it**, run on the poll
+  rather than its own timer, and go static when `HudConfig.MotionAllowed` is
+  false. Markers are drawn geometry, never glyphs: `▲` falls back to another
+  font at a different width and breaks character-measured alignment.
 - **Services never touch `System.Windows`.** Models don't either (that's why
   `AppSettings.WindowState` is a `string`).
 - **Settings failures are silent** — `SettingsService` returns defaults on any

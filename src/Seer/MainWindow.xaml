@@ -44,6 +44,7 @@
                 <RowDefinition Height="32" />   <!-- Title bar -->
                 <RowDefinition Height="Auto" /> <!-- Status strip -->
                 <RowDefinition Height="*" />    <!-- Main panels -->
+                <RowDefinition Height="Auto" /> <!-- Status line -->
             </Grid.RowDefinitions>
 
             <!-- ═══ Title Bar (32px) ═══ -->
@@ -133,60 +134,91 @@
 
                     <!-- CPU bar -->
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="CPU"
-                                   Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
-                        <Grid>
-                            <Border Style="{StaticResource StatusBarTrackStyle}" />
-                            <Border x:Name="CpuStatusBar"
-                                    Background="{StaticResource SeerAccent}"
-                                    Height="4" CornerRadius="0"
-                                    HorizontalAlignment="Left"
-                                    Width="0" />
+                        <Grid Margin="0,0,0,4">
+                            <TextBlock Text="CPU" Style="{StaticResource TagStyle}" />
+                            <TextBlock x:Name="CpuStatusValue"
+                                       Style="{StaticResource TagStyle}"
+                                       Foreground="{StaticResource SeerText}"
+                                       HorizontalAlignment="Right" />
                         </Grid>
+                        <controls:SegmentMeter x:Name="CpuStatusBar"
+                                               Height="4"
+                                               ShowTicks="True"
+                                               Fill="{StaticResource SeerAccent}"
+                                               TrackBrush="{StaticResource SeerMeterTrack}"
+                                               WarnBrush="{StaticResource SeerWarning}"
+                                               CritBrush="{StaticResource SeerDanger}"
+                                               PeakBrush="{StaticResource SeerPeak}" />
                     </StackPanel>
 
                     <!-- MEM bar -->
                     <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                        <TextBlock Text="MEM"
-                                   Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
-                        <Grid>
-                            <Border Style="{StaticResource StatusBarTrackStyle}" />
-                            <Border x:Name="MemStatusBar"
-                                    Background="{StaticResource SeerAccentSecondary}"
-                                    Height="4" CornerRadius="0"
-                                    HorizontalAlignment="Left"
-                                    Width="0" />
+                        <Grid Margin="0,0,0,4">
+                            <TextBlock Text="MEM" Style="{StaticResource TagStyle}" />
+                            <TextBlock x:Name="MemStatusValue"
+                                       Style="{StaticResource TagStyle}"
+                                       Foreground="{StaticResource SeerText}"
+                                       HorizontalAlignment="Right" />
                         </Grid>
+                        <controls:SegmentMeter x:Name="MemStatusBar"
+                                               Height="4"
+                                               ShowTicks="True"
+                                               Fill="{StaticResource SeerAccentSecondary}"
+                                               TrackBrush="{StaticResource SeerMeterTrack}"
+                                               WarnBrush="{StaticResource SeerWarning}"
+                                               CritBrush="{StaticResource SeerDanger}"
+                                               PeakBrush="{StaticResource SeerPeak}" />
                     </StackPanel>
 
                     <!-- GPU bar -->
                     <StackPanel Grid.Column="2" Margin="0,0,8,0">
-                        <TextBlock Text="GPU"
-                                   Style="{StaticResource TagStyle}" Margin="0,0,0,3" />
-                        <Grid>
-                            <Border Style="{StaticResource StatusBarTrackStyle}" />
-                            <Border x:Name="GpuStatusBar"
-                                    Background="{StaticResource SeerAccentTertiary}"
-                                    Height="4" CornerRadius="0"
-                                    HorizontalAlignment="Left"
-                                    Width="0" />
+                        <Grid Margin="0,0,0,4">
+                            <TextBlock Text="GPU" Style="{StaticResource TagStyle}" />
+                            <TextBlock x:Name="GpuStatusValue"
+                                       Style="{StaticResource TagStyle}"
+                                       Foreground="{StaticResource SeerText}"
+                                       HorizontalAlignment="Right" />
                         </Grid>
+                        <controls:SegmentMeter x:Name="GpuStatusBar"
+                                               Height="4"
+                                               ShowTicks="True"
+                                               Fill="{StaticResource SeerAccentTertiary}"
+                                               TrackBrush="{StaticResource SeerMeterTrack}"
+                                               WarnBrush="{StaticResource SeerWarning}"
+                                               CritBrush="{StaticResource SeerDanger}"
+                                               PeakBrush="{StaticResource SeerPeak}" />
                     </StackPanel>
 
-                    <!-- Status badge -->
-                    <Border x:Name="StatusBadgeBorder"
-                            Grid.Column="3"
-                            Background="#1A3DDC84"
-                            BorderBrush="{StaticResource SeerSuccess}"
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            Padding="10,2"
-                            VerticalAlignment="Center">
-                        <TextBlock x:Name="StatusBadgeText"
-                                   Text="NOMINAL"
+                    <!-- Sample heartbeat, then the status badge -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Blinks once per completed poll. A frozen dot means
+                             Seer has stopped sampling; a late poll turns it amber. -->
+                        <Ellipse x:Name="HeartbeatDot"
+                                 Width="6" Height="6"
+                                 Margin="0,0,10,0"
+                                 VerticalAlignment="Center"
+                                 Fill="{StaticResource SeerSuccess}"
+                                 Opacity="0.35" />
+
+                        <TextBlock x:Name="PollLateText"
                                    Style="{StaticResource TagStyle}"
-                                   Foreground="{StaticResource SeerSuccess}" />
-                    </Border>
+                                   Foreground="{StaticResource SeerWarning}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,10,0" />
+
+                        <Border x:Name="StatusBadgeBorder"
+                                Background="{StaticResource SeerSuccessTint}"
+                                BorderBrush="{StaticResource SeerSuccess}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="10,2"
+                                VerticalAlignment="Center">
+                            <TextBlock x:Name="StatusBadgeText"
+                                       Text="NOMINAL"
+                                       Style="{StaticResource TagStyle}"
+                                       Foreground="{StaticResource SeerSuccess}" />
+                        </Border>
+                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -206,7 +238,7 @@
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="12" /> <!-- Gap -->
-                    <RowDefinition Height="60" /> <!-- Trend Charts -->
+                    <RowDefinition Height="64" /> <!-- Trend Charts -->
                     <RowDefinition Height="12" /> <!-- Gap -->
                     <RowDefinition Height="Auto" /> <!-- Disk & Network I/O -->
                     <RowDefinition Height="12" /> <!-- Gap -->
@@ -225,30 +257,16 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- [1] CPU Panel -->
-                <controls:HudPanel Grid.Row="0" Grid.Column="0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <!-- Panel header -->
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="[1] CPU"
-                                           Style="{StaticResource PanelHeaderStyle}" />
-                                <TextBlock x:Name="ElevateButton" Grid.Column="1"
+                <controls:HudPanel x:Name="CpuPanel" Grid.Row="0" Grid.Column="0"
+                                   IndexTag="[1]" Header="CPU">
+                    <controls:HudPanel.HeaderContent>
+                                <TextBlock x:Name="ElevateButton"
                                            Text="RUN AS ADMIN"
                                            Style="{StaticResource TagStyle}"
                                            Foreground="{StaticResource SeerAccentSecondary}"
+                                           Background="{StaticResource SeerPanel}"
+                                           Padding="4,0"
+                                           VerticalAlignment="Center"
                                            Cursor="Hand"
                                            MouseDown="ElevateButton_Click"
                                            ToolTip="Relaunch as Administrator to read CPU Thermals/Power">
@@ -271,17 +289,29 @@
                                         </EventTrigger>
                                     </TextBlock.Triggers>
                                 </TextBlock>
-                            </Grid>
-                        </Border>
+                    </controls:HudPanel.HeaderContent>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
                         <!-- Panel content — live values -->
-                        <StackPanel Grid.Row="1" Margin="12,10,12,0">
-                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuTempValue" Text="--" Foreground="{StaticResource SeerWarning}" /><Run x:Name="CpuTempUnit" Text=" °C" Foreground="{StaticResource SeerWarning}" />
-                            </TextBlock>
-                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuLoadValue" Text="--" /><Run x:Name="CpuLoadUnit" Text=" %" />
-                            </TextBlock>
+                        <StackPanel Grid.Row="0" Margin="12,10,12,0">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <TextBlock Style="{StaticResource BaseTextStyle}">
+                                    <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuTempValue" Text="--" Foreground="{StaticResource SeerWarning}" /><Run x:Name="CpuTempUnit" Text=" °C" Foreground="{StaticResource SeerWarning}" />
+                                </TextBlock>
+                                <Path x:Name="CpuTempTrend" Width="7" Height="7" Stretch="Uniform"
+                                      Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <TextBlock Style="{StaticResource BaseTextStyle}">
+                                    <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuLoadValue" Text="--" /><Run x:Name="CpuLoadUnit" Text=" %" />
+                                </TextBlock>
+                                <Path x:Name="CpuLoadTrend" Width="7" Height="7" Stretch="Uniform"
+                                      Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                            </StackPanel>
                             <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
                                 <Run Text="Clock:        " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="CpuClockValue" Text="--" Foreground="{StaticResource SeerWarning}" /><Run x:Name="CpuClockUnit" Text=" MHz" Foreground="{StaticResource SeerWarning}" />
                             </TextBlock>
@@ -302,40 +332,31 @@
                              layout. The default vertical StackPanel gives
                              each row its natural height, so nothing can
                              overlap however short the panel gets. -->
-                        <ItemsControl x:Name="CpuCoreBarsControl" Grid.Row="2" Margin="12,10,12,10">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}"
-                                               Style="{StaticResource BaseTextStyle}"
-                                               FontSize="12"
-                                               Margin="0,0,0,2"
-                                               Foreground="{StaticResource SeerTextDim}" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <controls:CoreMatrix x:Name="CpuCoreMatrix" Grid.Row="1" Margin="12,10,12,10"
+                                             FontFamily="{StaticResource SeerFontFamily}"
+                                             FontSize="12"
+                                             Foreground="{StaticResource SeerTextDim}"
+                                             HeatMid="{StaticResource SeerText}"
+                                             HeatHigh="{StaticResource SeerAccent}"
+                                             PeakBrush="{StaticResource SeerPeak}" />
                     </Grid>
                 </controls:HudPanel>
 
                 <!-- [2] Memory Panel -->
-                <controls:HudPanel Grid.Row="0" Grid.Column="2">
+                <controls:HudPanel x:Name="MemPanel" Grid.Row="0" Grid.Column="2"
+                                   IndexTag="[2]" Header="MEMORY">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6">
-                            <TextBlock Text="[2] MEMORY"
-                                       Style="{StaticResource PanelHeaderStyle}" />
-                        </Border>
-
-                        <StackPanel Grid.Row="1" Margin="12,10">
-                            <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
+                        <StackPanel Margin="12,10">
+                            <TextBlock Style="{StaticResource BaseTextStyle}">
                                 <Run Text="Used:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="MemUsedValue" Text="-- / -- GB" />
                             </TextBlock>
+
+                            <!-- The two biggest numbers on screen get a shape
+                                 as well as digits. -->
+                            <controls:SegmentMeter x:Name="MemUsedMeter"
+                                                   Height="3" Margin="0,5,0,7"
+                                                   Fill="{StaticResource SeerAccentSecondary}"
+                                                   TrackBrush="{StaticResource SeerMeterTrack}" />
                             <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
                                 <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="MemLoadValue" Text="-- %" />
                             </TextBlock>
@@ -347,22 +368,10 @@
                 </controls:HudPanel>
 
                 <!-- [3] GPU Panel (spans full width on bottom row) -->
-                <controls:HudPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel x:Name="GpuPanel" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                                   IndexTag="[3]" Header="GPU">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6">
-                            <TextBlock Text="[3] GPU"
-                                       Style="{StaticResource PanelHeaderStyle}" />
-                        </Border>
-
-                        <Grid Grid.Row="1" Margin="12,10">
+                        <Grid Margin="12,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="12" />
@@ -375,12 +384,20 @@
                             </Grid.RowDefinitions>
 
                             <!-- Column 0 -->
-                            <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuTempValue" Text="--" /><Run x:Name="GpuTempUnit" Text=" °C" />
-                            </TextBlock>
-                            <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
-                                <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuLoadValue" Text="--" /><Run x:Name="GpuLoadUnit" Text=" %" />
-                            </TextBlock>
+                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,4">
+                                <TextBlock Style="{StaticResource BaseTextStyle}">
+                                    <Run Text="Temperature:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuTempValue" Text="--" /><Run x:Name="GpuTempUnit" Text=" °C" />
+                                </TextBlock>
+                                <Path x:Name="GpuTempTrend" Width="7" Height="7" Stretch="Uniform"
+                                      Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,4">
+                                <TextBlock Style="{StaticResource BaseTextStyle}">
+                                    <Run Text="Load:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuLoadValue" Text="--" /><Run x:Name="GpuLoadUnit" Text=" %" />
+                                </TextBlock>
+                                <Path x:Name="GpuLoadTrend" Width="7" Height="7" Stretch="Uniform"
+                                      Margin="10,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                            </StackPanel>
                             <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource BaseTextStyle}">
                                 <Run Text="Clock:        " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuClockValue" Text="--" /><Run x:Name="GpuClockUnit" Text=" MHz" />
                             </TextBlock>
@@ -392,9 +409,15 @@
                             <TextBlock Grid.Row="1" Grid.Column="2" Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
                                 <Run Text="Fan Speed:    " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuFanValue" Text="--" /><Run x:Name="GpuFanUnit" Text=" RPM" />
                             </TextBlock>
-                            <TextBlock Grid.Row="2" Grid.Column="2" Style="{StaticResource BaseTextStyle}">
-                                <Run Text="VRAM:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuVramValue" Text="-- / -- GB" />
-                            </TextBlock>
+                            <StackPanel Grid.Row="2" Grid.Column="2">
+                                <TextBlock Style="{StaticResource BaseTextStyle}">
+                                    <Run Text="VRAM:         " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="GpuVramValue" Text="-- / -- GB" />
+                                </TextBlock>
+                                <controls:SegmentMeter x:Name="GpuVramMeter"
+                                                       Height="3" Margin="0,5,0,0"
+                                                       Fill="{StaticResource SeerAccentTertiary}"
+                                                       TrackBrush="{StaticResource SeerMeterTrack}" />
+                            </StackPanel>
                         </Grid>
                     </Grid>
                 </controls:HudPanel>
@@ -415,35 +438,28 @@
                 </Grid>
 
                 <!-- ═══ Disk I/O Panel ═══ -->
-                <controls:HudPanel Grid.Row="6" Grid.Column="0">
+                <controls:HudPanel x:Name="DiskPanel" Grid.Row="6" Grid.Column="0"
+                                   IndexTag="[4]" Header="DISK I/O">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6">
-                            <TextBlock Text="[4] DISK I/O"
-                                       Style="{StaticResource PanelHeaderStyle}" />
-                        </Border>
-
-                        <StackPanel Grid.Row="1" Margin="12,10,12,10">
+                        <StackPanel Margin="12,10,12,10">
                             <!-- Read -->
                             <Grid Margin="0,0,0,4">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="96" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Read" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
-                                    <TextBlock x:Name="DiskReadBar" Text="          " Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
-                                    <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Rectangle x:Name="DiskReadLed" Width="5" Height="5" Margin="0,0,7,0"
+                                               Fill="{StaticResource SeerAccent}" Opacity="0.15" />
+                                    <TextBlock Text="Read" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" />
                                 </StackPanel>
+                                <controls:SegmentMeter Grid.Column="1" x:Name="DiskReadMeter"
+                                                       Height="4" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                       Max="1000" Scale="Log" LogFloor="0.05"
+                                                       Fill="{StaticResource SeerText}"
+                                                       TrackBrush="{StaticResource SeerMeterTrack}"
+                                                       PeakBrush="{StaticResource SeerPeak}" />
                                 <TextBlock Grid.Column="2" x:Name="DiskReadValue" Text="-- MB/s" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" TextAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
                             
@@ -452,14 +468,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="96" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Write" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
-                                    <TextBlock x:Name="DiskWriteBar" Text="          " Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
-                                    <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Rectangle x:Name="DiskWriteLed" Width="5" Height="5" Margin="0,0,7,0"
+                                               Fill="{StaticResource SeerAccent}" Opacity="0.15" />
+                                    <TextBlock Text="Write" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" />
                                 </StackPanel>
+                                <controls:SegmentMeter Grid.Column="1" x:Name="DiskWriteMeter"
+                                                       Height="4" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                       Max="1000" Scale="Log" LogFloor="0.05"
+                                                       Fill="{StaticResource SeerText}"
+                                                       TrackBrush="{StaticResource SeerMeterTrack}"
+                                                       PeakBrush="{StaticResource SeerPeak}" />
                                 <TextBlock Grid.Column="2" x:Name="DiskWriteValue" Text="-- MB/s" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" TextAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
                         </StackPanel>
@@ -467,35 +488,28 @@
                 </controls:HudPanel>
 
                 <!-- ═══ Network I/O Panel ═══ -->
-                <controls:HudPanel Grid.Row="6" Grid.Column="2">
+                <controls:HudPanel x:Name="NetPanel" Grid.Row="6" Grid.Column="2"
+                                   IndexTag="[5]" Header="NETWORK I/O">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6">
-                            <TextBlock Text="[5] NETWORK I/O"
-                                       Style="{StaticResource PanelHeaderStyle}" />
-                        </Border>
-
-                        <StackPanel Grid.Row="1" Margin="12,10,12,10">
+                        <StackPanel Margin="12,10,12,10">
                             <!-- Download -->
                             <Grid Margin="0,0,0,4">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="96" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Down" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
-                                    <TextBlock x:Name="NetDownBar" Text="          " Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
-                                    <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Rectangle x:Name="NetDownLed" Width="5" Height="5" Margin="0,0,7,0"
+                                               Fill="{StaticResource SeerAccent}" Opacity="0.15" />
+                                    <TextBlock Text="Down" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" />
                                 </StackPanel>
+                                <controls:SegmentMeter Grid.Column="1" x:Name="NetDownMeter"
+                                                       Height="4" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                       Max="1000" Scale="Log" LogFloor="0.05"
+                                                       Fill="{StaticResource SeerText}"
+                                                       TrackBrush="{StaticResource SeerMeterTrack}"
+                                                       PeakBrush="{StaticResource SeerPeak}" />
                                 <TextBlock Grid.Column="2" x:Name="NetDownValue" Text="-- Mbps" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" TextAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
                             
@@ -504,14 +518,19 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="96" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Up" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
-                                    <TextBlock x:Name="NetUpBar" Text="          " Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
-                                    <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Rectangle x:Name="NetUpLed" Width="5" Height="5" Margin="0,0,7,0"
+                                               Fill="{StaticResource SeerAccent}" Opacity="0.15" />
+                                    <TextBlock Text="Up" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" />
                                 </StackPanel>
+                                <controls:SegmentMeter Grid.Column="1" x:Name="NetUpMeter"
+                                                       Height="4" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                       Max="1000" Scale="Log" LogFloor="0.05"
+                                                       Fill="{StaticResource SeerText}"
+                                                       TrackBrush="{StaticResource SeerMeterTrack}"
+                                                       PeakBrush="{StaticResource SeerPeak}" />
                                 <TextBlock Grid.Column="2" x:Name="NetUpValue" Text="-- Mbps" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" TextAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
                         </StackPanel>
@@ -519,52 +538,82 @@
                 </controls:HudPanel>
 
                 <!-- ═══ Top Processes Panel ═══ -->
-                <controls:HudPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel x:Name="ProcPanel" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3"
+                                   IndexTag="[6]" Header="TOP PROCESSES">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6">
-                            <TextBlock Text="[6] TOP PROCESSES"
-                                       Style="{StaticResource PanelHeaderStyle}" />
-                        </Border>
-
-                        <ItemsControl x:Name="TopProcessesControl" Grid.Row="1" Margin="12,10,12,10">
+                        <ItemsControl x:Name="TopProcessesControl" Margin="12,10,12,10">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,0,0,4">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="14" />
                                             <ColumnDefinition Width="100" />
                                             <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="52" />
                                             <ColumnDefinition Width="70" />
                                         </Grid.ColumnDefinitions>
-                                        
+
+                                        <!-- Rank change. Drawn rather than typed:
+                                             an arrow glyph would fall back to
+                                             another face if the monospace font
+                                             is missing, at a different width. -->
+                                        <Path Grid.Column="0"
+                                              Width="6" Height="6"
+                                              Stretch="Uniform"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left">
+                                            <Path.Style>
+                                                <Style TargetType="Path">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding RankMark}" Value="Up">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Setter Property="Data" Value="M 0,6 L 3,0 L 6,6 Z" />
+                                                            <Setter Property="Fill" Value="{StaticResource SeerAccent}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding RankMark}" Value="Down">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Setter Property="Data" Value="M 0,0 L 6,0 L 3,6 Z" />
+                                                            <Setter Property="Fill" Value="{StaticResource SeerTextDim}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding RankMark}" Value="New">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Setter Property="Data" Value="M 2,0 L 4,0 L 4,2 L 6,2 L 6,4 L 4,4 L 4,6 L 2,6 L 2,4 L 0,4 L 0,2 L 2,2 Z" />
+                                                            <Setter Property="Fill" Value="{StaticResource SeerAccent}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Path.Style>
+                                        </Path>
+
                                         <!-- Name (truncated) -->
-                                        <TextBlock Grid.Column="0" 
-                                                   Text="{Binding Name}" 
-                                                   Style="{StaticResource BaseTextStyle}" 
-                                                   TextTrimming="CharacterEllipsis" 
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Name}"
+                                                   Style="{StaticResource BaseTextStyle}"
+                                                   TextTrimming="CharacterEllipsis"
                                                    VerticalAlignment="Center" />
-                                                   
-                                        <!-- CPU Bar -->
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="[" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
-                                            <TextBlock Text="{Binding CpuBar}" Style="{StaticResource BaseTextStyle}" xml:space="preserve" />
-                                            <TextBlock Text="{Binding CpuPercent, StringFormat={}{0,5:F1}%}" Style="{StaticResource BaseTextStyle}" Width="45" TextAlignment="Right" />
-                                            <TextBlock Text="]" Foreground="{StaticResource SeerTextDim}" Style="{StaticResource BaseTextStyle}" />
-                                        </StackPanel>
-                                        
+
+                                        <controls:SegmentMeter Grid.Column="2"
+                                                               Height="4"
+                                                               VerticalAlignment="Center"
+                                                               Margin="0,0,10,0"
+                                                               Value="{Binding CpuPercent}"
+                                                               Max="100"
+                                                               Fill="{StaticResource SeerText}"
+                                                               TrackBrush="{StaticResource SeerMeterTrack}" />
+
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding CpuPercent, StringFormat={}{0,5:F1}%}"
+                                                   Style="{StaticResource BaseTextStyle}"
+                                                   TextAlignment="Right"
+                                                   VerticalAlignment="Center" />
+
                                         <!-- RAM Value -->
-                                        <TextBlock Grid.Column="2" 
-                                                   Text="{Binding WorkingSetMb, StringFormat={}{0,5:F0}MB}" 
-                                                   Style="{StaticResource BaseTextStyle}" 
-                                                   Foreground="{StaticResource SeerTextDim}" 
-                                                   TextAlignment="Right" 
+                                        <TextBlock Grid.Column="4"
+                                                   Text="{Binding WorkingSetMb, StringFormat={}{0,5:F0}MB}"
+                                                   Style="{StaticResource BaseTextStyle}"
+                                                   Foreground="{StaticResource SeerTextDim}"
+                                                   TextAlignment="Right"
                                                    VerticalAlignment="Center" />
                                     </Grid>
                                 </DataTemplate>
@@ -574,45 +623,27 @@
                 </controls:HudPanel>
 
                 <!-- ═══ Ping / Latency Panel ═══ -->
-                <controls:HudPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel x:Name="PingPanel" Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3"
+                                   IndexTag="[7]" Header="PING">
+                    <controls:HudPanel.HeaderContent>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="PingStateText"
+                                       Text="STOPPED"
+                                       Style="{StaticResource TagStyle}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0" />
+
+                            <!-- Unlike every other panel, this one sends
+                                 traffic, so it stays off until started. -->
+                            <Button x:Name="PingToggleButton"
+                                    Content="START"
+                                    Style="{StaticResource SeerActionButtonStyle}"
+                                    Padding="10,0"
+                                    Click="PingToggleButton_Click" />
+                        </StackPanel>
+                    </controls:HudPanel.HeaderContent>
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.Column="0" Text="[7] PING"
-                                           Style="{StaticResource PanelHeaderStyle}"
-                                           VerticalAlignment="Center" />
-
-                                <TextBlock Grid.Column="1" x:Name="PingStateText"
-                                           Text="STOPPED"
-                                           Style="{StaticResource TagStyle}"
-                                           VerticalAlignment="Center"
-                                           Margin="10,0,0,0" />
-
-                                <!-- Unlike every other panel, this one sends
-                                     traffic, so it stays off until started. -->
-                                <Button Grid.Column="2" x:Name="PingToggleButton"
-                                        Content="START"
-                                        Style="{StaticResource SeerActionButtonStyle}"
-                                        Padding="12,2"
-                                        Click="PingToggleButton_Click" />
-                            </Grid>
-                        </Border>
-
-                        <Grid Grid.Row="1" Margin="12,10,12,10">
+                        <Grid Margin="12,10,12,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -620,6 +651,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -655,32 +687,30 @@
                                        Style="{StaticResource BaseTextStyle}">
                                 <Run Text="Loss:    " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="PingLossValue" Text="--" />
                             </TextBlock>
+
+                            <!-- One bar per reply, newest on the right, with
+                                 losses as red hairlines. Jitter has a shape
+                                 that an average can't show. -->
+                            <controls:PingTape Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+                                               x:Name="PingTapeStrip"
+                                               Height="22"
+                                               Margin="0,12,0,0"
+                                               Fill="{StaticResource SeerAccent}"
+                                               LatestBrush="{StaticResource SeerPeak}"
+                                               LossBrush="{StaticResource SeerDanger}" />
                         </Grid>
                     </Grid>
                 </controls:HudPanel>
 
                 <!-- ═══ Alerts Panel (collapsed by default) ═══ -->
-                <controls:HudPanel Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel x:Name="EventsPanel" Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3"
+                                   IndexTag="[8]" Header="EVENTS"
+                                   IsExpandable="True" IsExpanded="False">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <!-- Clickable header -->
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6"
-                                Cursor="Hand"
-                                MouseDown="AlertsHeader_Click">
-                            <TextBlock x:Name="AlertsHeaderText"
-                                       Text="[8] ALERTS ▸"
-                                       Style="{StaticResource PanelHeaderStyle}" />
-                        </Border>
-
-                        <!-- Collapsible content -->
-                        <ScrollViewer x:Name="AlertsContent" Grid.Row="1" Margin="12,10" MaxHeight="120" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                        <!-- Collapsing is the panel's own state now: the
+                             header line toggles IsExpanded and the template
+                             drops the body, so there is no handler here. -->
+                        <ScrollViewer x:Name="AlertsContent" Margin="12,10" MaxHeight="120" VerticalScrollBarVisibility="Auto">
                             <ItemsControl x:Name="AlertsList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -692,9 +722,12 @@
                                                 <ColumnDefinition Width="Auto" /> <!-- Severity Badge -->
                                             </Grid.ColumnDefinitions>
                                             
-                                            <TextBlock Grid.Column="0" Text="{Binding FormattedTime}" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="1" Text="{Binding MetricName}" Style="{StaticResource BaseTextStyle}" VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="2" Text="{Binding FormattedValue}" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
+                                            <!-- The timestamp is the one place
+                                                 the peak accent appears in text:
+                                                 it marks when, not what. -->
+                                            <TextBlock Grid.Column="0" Text="{Binding FormattedTime}" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerPeak}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Source}" Style="{StaticResource BaseTextStyle}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="2" Text="{Binding Text}" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                                             
                                             <!-- 4px, matching the status badge in the
                                                  status strip. The design system allows
@@ -709,11 +742,16 @@
                                                 <Border.Style>
                                                     <Style TargetType="Border">
                                                         <Setter Property="BorderBrush" Value="{StaticResource SeerWarning}" />
-                                                        <Setter Property="Background" Value="#1AF59E0B" />
+                                                        <Setter Property="Background" Value="{StaticResource SeerWarningTint}" />
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding Severity}" Value="Critical">
                                                                 <Setter Property="BorderBrush" Value="{StaticResource SeerDanger}" />
-                                                                <Setter Property="Background" Value="#1AEF4444" />
+                                                                <Setter Property="Background" Value="{StaticResource SeerDangerTint}" />
+                                                            </DataTrigger>
+                                                            <!-- Ordinary events carry no badge: a badge on
+                                                                 everything would say nothing. -->
+                                                            <DataTrigger Binding="{Binding HasSeverity}" Value="False">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -740,27 +778,11 @@
                 </controls:HudPanel>
 
                 <!-- ═══ System Info Panel (collapsed by default) ═══ -->
-                <controls:HudPanel Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="3">
+                <controls:HudPanel x:Name="SysInfoPanel" Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="3"
+                                   IndexTag="[i]" Header="SYSTEM INFO"
+                                   IsExpandable="True" IsExpanded="False">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <!-- Clickable header -->
-                        <Border Grid.Row="0"
-                                BorderBrush="{StaticResource SeerBorder}"
-                                BorderThickness="0,0,0,1"
-                                Padding="8,6"
-                                Cursor="Hand"
-                                MouseDown="SystemInfoHeader_Click">
-                            <TextBlock x:Name="SystemInfoHeaderText"
-                                       Text="[i] SYSTEM INFO ▸"
-                                       Style="{StaticResource PanelHeaderStyle}" />
-                        </Border>
-
-                        <!-- Collapsible content -->
-                        <StackPanel x:Name="SystemInfoContent" Grid.Row="1" Margin="12,10" Visibility="Collapsed">
+                        <StackPanel x:Name="SystemInfoContent" Margin="12,10">
                             <TextBlock Style="{StaticResource BaseTextStyle}" Margin="0,0,0,4">
                                 <Run Text="Motherboard:  " Foreground="{StaticResource SeerTextDim}" /><Run x:Name="SysMotherboard" Text="--" />
                             </TextBlock>
@@ -787,6 +809,40 @@
                 </controls:HudPanel>
             </Grid>
             </ScrollViewer>
+
+            <!-- ═══ Status line ═══
+                 What Seer costs to run, how long the machine has been up,
+                 whether sensors are reachable, and the last thing that
+                 happened. Outside the ScrollViewer: it describes the session,
+                 not the panels. -->
+            <Border x:Name="StatusLine" Grid.Row="3"
+                    Background="{StaticResource SeerPanel}"
+                    BorderBrush="{StaticResource SeerBorder}"
+                    BorderThickness="0,1,0,0"
+                    Padding="12,4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="StatusPollText" Grid.Column="0"
+                               Style="{StaticResource TagStyle}" />
+                    <TextBlock x:Name="StatusUptimeText" Grid.Column="1"
+                               Style="{StaticResource TagStyle}" Margin="16,0,0,0" />
+                    <TextBlock x:Name="StatusElevationText" Grid.Column="2"
+                               Style="{StaticResource TagStyle}" Margin="16,0,0,0" />
+                    <TextBlock x:Name="StatusEventText" Grid.Column="3"
+                               Style="{StaticResource TagStyle}" Margin="16,0,16,0"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="StatusClockText" Grid.Column="4"
+                               Style="{StaticResource TagStyle}"
+                               Foreground="{StaticResource SeerText}" />
+                </Grid>
+            </Border>
         </Grid>
     </Border>
 </Window>
