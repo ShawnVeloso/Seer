@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace Seer.Models;
 
 /// <summary>
@@ -34,6 +37,20 @@ public record PingSnapshot(
     int Received,
     string? LastError)
 {
+    /// <summary>
+    /// Marks an attempt that never came back. Lives here so the monitor that
+    /// records it and the tape that draws it agree by construction.
+    /// </summary>
+    public const long Lost = -1;
+
+    /// <summary>
+    /// The recent replies in order, oldest first, with <see cref="Lost"/>
+    /// marking a request that never came back. Added as an init-only property rather than a
+    /// constructor parameter so <see cref="Idle"/> and every existing caller
+    /// keep working unchanged.
+    /// </summary>
+    public IReadOnlyList<long> Recent { get; init; } = Array.Empty<long>();
+
     /// <summary>Packet loss over the session, 0–100.</summary>
     public double LossPercent => Sent == 0 ? 0 : (Sent - Received) * 100.0 / Sent;
 

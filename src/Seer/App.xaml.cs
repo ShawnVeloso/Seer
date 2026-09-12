@@ -17,6 +17,17 @@ public partial class App : Application
             CrashLogService.Write("DispatcherUnhandledException", ev.Exception);
         base.OnStartup(e);
 
+        // Off-screen verification hook. Renders the window to PNG and exits
+        // without showing anything; see RenderShot for why a build alone
+        // proves nothing about XAML.
+        if (RenderShot.IsRequested(e.Args))
+        {
+            var outputDir = RenderShot.Run(e.Args);
+            Console.WriteLine(outputDir);
+            Shutdown();
+            return;
+        }
+
         // RunSensorSmokeTest(); // Preserved for debugging, but disabled for live UI
     }
 

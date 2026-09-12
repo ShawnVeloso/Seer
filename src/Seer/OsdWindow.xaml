@@ -1,23 +1,40 @@
 <Window x:Class="Seer.OsdWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Seer OSD Spike"
+        xmlns:controls="clr-namespace:Seer.Controls"
+        Title="Seer OSD"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
-        Width="500" Height="36"
+        SizeToContent="WidthAndHeight"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
-    <Border x:Name="RootBorder" Background="Transparent" CornerRadius="0" Padding="10,4">
+
+    <!-- The overlay wears the same chrome as a panel: hairline edge, cut
+         top-right corner, panel ground. It used to hardcode #4dd8ff in a
+         plain Border, which made it the one surface in the app that never
+         followed the theme. Every colour is now set from a Theme.xaml token
+         in ApplyLockState.
+
+         Locked, the chrome goes away entirely and only the readings are left
+         floating over the desktop — that is what locking is for. -->
+    <Grid>
+        <controls:ChamferShape x:Name="Chrome"
+                               Chamfer="7"
+                               StrokeThickness="1" />
+
         <!-- Content is built as coloured runs in code — see
              OsdWindow.UpdateStats — so no Text is set here. -->
         <TextBlock x:Name="OsdText"
-                   Foreground="#4dd8ff"
-                   FontFamily="JetBrains Mono, Consolas, monospace"
+                   FontFamily="{StaticResource SeerFontFamily}"
                    FontSize="13"
                    FontWeight="Bold"
-                   VerticalAlignment="Center"/>
-    </Border>
+                   Foreground="{StaticResource SeerText}"
+                   VerticalAlignment="Center"
+                   Margin="11,4,13,4" />
+    </Grid>
 </Window>

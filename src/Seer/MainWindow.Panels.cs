@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
+using Seer.Controls;
 using Seer.Models;
+using Seer.Services;
 
 namespace Seer;
 
@@ -21,8 +22,15 @@ namespace Seer;
 /// </summary>
 public partial class MainWindow
 {
-    private void UpdatePanels()
+    /// <summary>
+    /// One poll's worth of rendering. Internal rather than private so the
+    /// off-screen render harness can fill the history buffers before taking a
+    /// shot — a chart with one sample has no line to draw.
+    /// </summary>
+    internal void UpdatePanels()
     {
+        _pollClock.BeginPoll(DateTime.Now);
+
         var cpu = UpdateCpuPanel();
         var mem = UpdateMemoryPanel();
         var gpu = UpdateGpuPanel();
@@ -36,18 +44,77 @@ public partial class MainWindow
         _trayMetrics?.Update(cpu, mem, gpu, _appSettings);
         
         var (overallSeverity, newAlerts) = _thresholdEvaluator.Evaluate(cpu, mem, gpu, _appSettings);
+
+        ApplyPanelSeverity(_thresholdEvaluator.Last);
         
         foreach (var alert in newAlerts)
-        {
-            _alerts.Insert(0, alert); // Newest at top
-        }
-
-        while (_alerts.Count > MaxAlerts)
-        {
-            _alerts.RemoveAt(_alerts.Count - 1);
-        }
+            _events.AddAlert(alert);
 
         UpdateStatusBadge(overallSeverity);
+
+        // Stop the clock before the living details render, so the figure on
+        // the status line is the cost of reading and drawing the data rather
+        // than the cost of reporting on itself.
+        _pollClock.EndPoll();
+        UpdateLivingDetails();
+    }
+
+    /// <summary>CPU share at which a process is worth an event.</summary>
+    private const double HeavyProcessPercent = 20;
+
+    /// <summary>
+    /// Logs a process the first time it crosses the heavy mark, and forgets
+    /// it once it drops back. Without the second half, a game running for an
+    /// hour would either log nothing or log every single second.
+    /// </summary>
+    private void RecordHeavyProcesses(IReadOnlyList<ProcessMetrics> top)
+    {
+        var stillHeavy = new HashSet<int>();
+
+        foreach (var process in top)
+        {
+            if (process.CpuPercent < HeavyProcessPercent)
+                continue;
+
+            stillHeavy.Add(process.Pid);
+
+            if (_heavyProcesses.Add(process.Pid))
+                _events.Add(process.Name, $"{process.CpuPercent:F0}% CPU");
+        }
+
+        _heavyProcesses.IntersectWith(stillHeavy);
+    }
+
+    /// <summary>
+    /// Gives a "used of total" readout a shape as well as digits. Hidden
+    /// rather than emptied when the sensor is unavailable — a meter stuck at
+    /// zero would read as "nothing in use" rather than "nothing known".
+    /// </summary>
+    private static void UpdateInlineMeter(SegmentMeter meter, float? used, float? total)
+    {
+        if (!HudConfig.EnableInlineMeters || used is not float amount || total is not float capacity || capacity <= 0)
+        {
+            meter.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        meter.Visibility = Visibility.Visible;
+        meter.Max = capacity;
+        meter.Value = amount;
+    }
+
+    /// <summary>
+    /// Feeds one reading into its session statistics and hands the chart the
+    /// figures to show: low, mean and high on the border line, and the
+    /// session peak as a line across the plot.
+    /// </summary>
+    private static void UpdateChartSession(TrendChart chart, SessionStats stats, float? value)
+    {
+        if (value is float reading)
+            stats.Push(reading);
+
+        chart.SessionPeak = (float?)stats.Max;
+        chart.SetSessionStats((float?)stats.Min, (float?)stats.Average, (float?)stats.Max);
     }
 
     /// <summary>
@@ -80,10 +147,6 @@ public partial class MainWindow
             CpuLoadValue.Text = cpu.TotalLoad.Value.ToString("F1");
             CpuLoadUnit.Text = " %";
 
-            // Also update the status strip CPU bar (percentage of parent width)
-            // The status strip track is inside a Grid, so we approximate
-            // using a fixed max width matching the column
-            UpdateStatusBar(CpuStatusBar, cpu.TotalLoad.Value);
             AddHistory(_cpuHistory, cpu.TotalLoad.Value);
         }
         else
@@ -93,6 +156,8 @@ public partial class MainWindow
             
             AddHistory(_cpuHistory, 0f);
         }
+        UpdateStatusMeter(CpuStatusBar, CpuStatusValue, _cpuPeak, cpu.TotalLoad);
+        UpdateChartSession(CpuChart, _cpuSession, cpu.TotalLoad);
         CpuChart.UpdateData(_cpuHistory);
 
         // Clock — elevation-gated
@@ -123,127 +188,46 @@ public partial class MainWindow
             CpuPowerUnit.Foreground = _warningBrush;
         }
 
-        // Per-core Load Bars
-        if (cpu.CoreLoads != null && cpu.CoreLoads.Length > 0)
+        UpdateTrendArrow(CpuTempTrend, _cpuTempSlope, cpu.Temperature, _warningBrush, _dimBrush);
+        UpdateTrendArrow(CpuLoadTrend, _cpuLoadSlope, cpu.TotalLoad, _normalBrush, _dimBrush);
+
+        // Per-core load bars. The matrix owns its own layout now, so there is
+        // nothing to compose here beyond the peak-hold values.
+        if (cpu.CoreLoads is { Length: > 0 })
         {
-            CpuCoreBarsControl.ItemsSource = BuildCoreRows(cpu.CoreLoads);
-            CpuCoreBarsControl.Visibility = Visibility.Visible;
+            CpuCoreMatrix.SetCores(cpu.CoreLoads, CorePeaks(cpu.CoreLoads));
+            CpuCoreMatrix.Visibility = Visibility.Visible;
         }
         else
         {
-            CpuCoreBarsControl.Visibility = Visibility.Collapsed;
+            CpuCoreMatrix.Visibility = Visibility.Collapsed;
         }
 
         return cpu;
     }
 
-    // ── Per-core bar layout ────────────────────────────────────────────
-    //
-    // Threads read top-to-bottom down each column (0,1,2,3 in the first
-    // column, not across the first row), which means the number of rows
-    // has to be known before the text is built — so the rows are composed
-    // here rather than left to a wrapping panel. Every cell is the same
-    // width in a monospace font, so the columns line up by construction.
-
-    /// <summary>Characters in one cell: " 0[|||  39%]".</summary>
-    private const int CoreCellChars = 13;
-
-    /// <summary>Gap between columns, in characters.</summary>
-    private const int CoreGapChars = 2;
-
-    /// <summary>Must match the FontSize on the item template in XAML.</summary>
-    private const double CoreFontSize = 12;
-
-    /// <summary>Width of one character, measured once and cached.</summary>
-    private double _coreCharWidth;
-
     /// <summary>
-    /// Lays the cores out column-major and returns one string per row.
+    /// Pushes each core's load through its own peak-hold and returns the
+    /// values to mark. The matrix draws them; the decay lives here, because
+    /// it is session state rather than a drawing concern.
     /// </summary>
-    private string[] BuildCoreRows((string Name, float Load)[] coreLoads)
+    private double[] CorePeaks((string Name, float Load)[] coreLoads)
     {
-        var cells = new string[coreLoads.Length];
+        if (!HudConfig.EnablePeakHold)
+            return Array.Empty<double>();
+
+        if (_corePeaks.Length != coreLoads.Length)
+        {
+            _corePeaks = new PeakHold[coreLoads.Length];
+            for (var i = 0; i < _corePeaks.Length; i++)
+                _corePeaks[i] = new PeakHold();
+        }
+
+        var peaks = new double[coreLoads.Length];
         for (var i = 0; i < coreLoads.Length; i++)
-        {
-            var load = coreLoads[i].Load;
+            peaks[i] = _corePeaks[i].Push(coreLoads[i].Load);
 
-            // Five segments and a whole-number percentage keep every cell
-            // exactly CoreCellChars wide, which is what lets several sit
-            // side by side in a half-width panel. The old 21-character
-            // form only ever fitted two, and overflowed below about 800px
-            // of window width.
-            var bars = Math.Clamp((int)Math.Round(load / 20.0f), 0, 5);
-            cells[i] = $"{i,2}[{new string('|', bars).PadRight(5)}{load,3:F0}%]";
-        }
-
-        var columns = CoreColumnCount(cells.Length);
-        var rows = (int)Math.Ceiling(cells.Length / (double)columns);
-        var gap = new string(' ', CoreGapChars);
-        var lines = new string[rows];
-
-        for (var row = 0; row < rows; row++)
-        {
-            var line = new StringBuilder();
-            for (var column = 0; column < columns; column++)
-            {
-                // Walk down each column before moving right.
-                var index = (column * rows) + row;
-                if (index >= cells.Length)
-                    break;
-
-                if (column > 0)
-                    line.Append(gap);
-
-                line.Append(cells[index]);
-            }
-            lines[row] = line.ToString();
-        }
-
-        return lines;
-    }
-
-    /// <summary>
-    /// How many columns fit the panel's current width. Recomputed each
-    /// poll, so resizing the window settles within a second without
-    /// needing a layout event.
-    /// </summary>
-    private int CoreColumnCount(int cellCount)
-    {
-        var available = CpuCoreBarsControl.ActualWidth;
-
-        // First call happens before layout, so ActualWidth is still zero.
-        // Guess, and the next tick corrects it.
-        if (available <= 0)
-            return Math.Min(4, cellCount);
-
-        if (_coreCharWidth <= 0)
-            _coreCharWidth = MeasureCoreCharWidth();
-
-        // n columns occupy n*cell + (n-1)*gap characters, so the number
-        // that fits is (chars + gap) / (cell + gap).
-        var availableChars = (int)(available / _coreCharWidth);
-        var columns = (availableChars + CoreGapChars) / (CoreCellChars + CoreGapChars);
-
-        return Math.Clamp(columns, 1, cellCount);
-    }
-
-    /// <summary>
-    /// Measures one character of the panel's monospace face. Cached — the
-    /// font can't change while the app is running.
-    /// </summary>
-    private double MeasureCoreCharWidth()
-    {
-        var family = (FontFamily)FindResource("SeerFontFamily");
-        var measured = new FormattedText(
-            "0",
-            CultureInfo.InvariantCulture,
-            FlowDirection.LeftToRight,
-            new Typeface(family, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
-            CoreFontSize,
-            Brushes.White,
-            VisualTreeHelper.GetDpi(this).PixelsPerDip);
-
-        return measured.Width;
+        return peaks;
     }
 
     /// <summary>
@@ -263,12 +247,12 @@ public partial class MainWindow
             MemUsedValue.Text = "-- / -- GB";
         }
 
+        UpdateInlineMeter(MemUsedMeter, mem.UsedGb, mem.TotalGb);
+
         if (mem.Load.HasValue)
         {
             MemLoadValue.Text = $"{mem.Load.Value:F1} %";
 
-            // Update status strip MEM bar
-            UpdateStatusBar(MemStatusBar, mem.Load.Value);
             AddHistory(_memHistory, mem.Load.Value);
         }
         else
@@ -277,6 +261,8 @@ public partial class MainWindow
             
             AddHistory(_memHistory, 0f);
         }
+        UpdateStatusMeter(MemStatusBar, MemStatusValue, _memPeak, mem.Load);
+        UpdateChartSession(MemChart, _memSession, mem.Load);
         MemChart.UpdateData(_memHistory);
 
         if (mem.AvailableGb.HasValue)
@@ -320,7 +306,6 @@ public partial class MainWindow
             GpuLoadValue.Text = gpu.Load.Value.ToString("F1");
             GpuLoadValue.Foreground = _normalBrush;
             GpuLoadUnit.Foreground = _normalBrush;
-            UpdateStatusBar(GpuStatusBar, gpu.Load.Value);
             AddHistory(_gpuHistory, gpu.Load.Value);
         }
         else
@@ -331,6 +316,8 @@ public partial class MainWindow
             
             AddHistory(_gpuHistory, 0f);
         }
+        UpdateStatusMeter(GpuStatusBar, GpuStatusValue, _gpuPeak, gpu.Load);
+        UpdateChartSession(GpuChart, _gpuSession, gpu.Load);
         GpuChart.UpdateData(_gpuHistory);
 
         // Clock
@@ -396,50 +383,114 @@ public partial class MainWindow
             GpuVramValue.Foreground = _warningBrush;
         }
 
+        UpdateInlineMeter(GpuVramMeter, gpu.VramUsedGb, gpu.VramTotalGb);
+
+        UpdateTrendArrow(GpuTempTrend, _gpuTempSlope, gpu.Temperature, _warningBrush, _dimBrush);
+        UpdateTrendArrow(GpuLoadTrend, _gpuLoadSlope, gpu.Load, _normalBrush, _dimBrush);
+
         return gpu;
     }
 
     /// <summary>
-    /// Updates a status strip bar width based on a 0–100 percentage value.
-    /// The bar's parent Grid provides the available width.
+    /// Paints one status strip channel: the segmented bar, its printed value,
+    /// the warning and critical ticks, and the peak-hold marker.
+    ///
+    /// The thresholds are pushed every poll rather than bound once, so a
+    /// change in the settings window lands on the next tick like every other
+    /// setting. The meter reads its own width, which the old version could
+    /// not — it sized the bar from its parent's ActualWidth and so drew
+    /// nothing at all on the first tick, before layout had run.
     /// </summary>
-    private static void UpdateStatusBar(FrameworkElement bar, float percentage)
+    private void UpdateStatusMeter(SegmentMeter meter, TextBlock label, PeakHold peak, float? value)
     {
-        // Clamp to 0–100
-        percentage = Math.Clamp(percentage, 0f, 100f);
+        meter.WarnThreshold = _appSettings.LoadWarningThreshold;
+        meter.CritThreshold = _appSettings.LoadCriticalThreshold;
 
-        // The bar is inside a Grid that's inside a StackPanel column.
-        // We use the parent Grid's actual width to calculate the bar width.
-        if (bar.Parent is FrameworkElement parent && parent.ActualWidth > 0)
+        if (value is not float reading)
         {
-            bar.Width = parent.ActualWidth * (percentage / 100.0);
+            meter.Value = 0;
+            meter.Peak = double.NaN;
+            peak.Reset();
+            label.Text = "  --";
+            return;
         }
+
+        meter.Value = reading;
+        meter.Peak = HudConfig.EnablePeakHold ? peak.Push(reading) : double.NaN;
+
+        // Padded to a fixed width: this changes every second, and a label
+        // that changes width re-measures the whole strip with it.
+        label.Text = $"{reading,3:F0}%";
     }
 
+    /// <summary>
+    /// The busiest processes, with rank marks, and the totals they came from.
+    /// The counts are padded so the header doesn't re-measure every poll as
+    /// processes come and go.
+    /// </summary>
     private void UpdateTopProcessesPanel()
     {
-        var topProcs = _processMonitor.GetTopProcesses(5);
-        TopProcessesControl.ItemsSource = topProcs;
+        var snapshot = _processMonitor.GetSnapshot(5);
+
+        TopProcessesControl.ItemsSource = HudConfig.EnableProcessRankArrows
+            ? _rankTracker.Apply(snapshot.Top)
+            : snapshot.Top;
+
+        RecordHeavyProcesses(snapshot.Top);
+
+        ProcPanel.Meta = snapshot.TotalThreads > 0
+            ? $"{snapshot.Top.Count} OF {snapshot.TotalProcesses,4} · {snapshot.TotalThreads,5} THREADS"
+            : $"{snapshot.Top.Count} OF {snapshot.TotalProcesses,4}";
     }
 
+    /// <summary>
+    /// Disk throughput. The meters are logarithmic: on the old linear bar,
+    /// scaled to 100 MB/s, ordinary activity never lit a single character, so
+    /// the row read as idle whenever it wasn't saturated.
+    /// </summary>
     private void UpdateDiskPanel()
     {
         var metrics = _diskMonitor.GetMetrics();
-        DiskReadBar.Text = metrics.ReadBar;
-        DiskReadValue.Text = $"{metrics.ReadBytesPerSec / (1024.0 * 1024.0):F1} MB/s";
-        
-        DiskWriteBar.Text = metrics.WriteBar;
-        DiskWriteValue.Text = $"{metrics.WriteBytesPerSec / (1024.0 * 1024.0):F1} MB/s";
+
+        var read = metrics.ReadBytesPerSec / (1024.0 * 1024.0);
+        var write = metrics.WriteBytesPerSec / (1024.0 * 1024.0);
+
+        DiskReadMeter.Value = read;
+        DiskReadValue.Text = $"{read,6:F1} MB/s";
+
+        DiskWriteMeter.Value = write;
+        DiskWriteValue.Text = $"{write,6:F1} MB/s";
+
+        UpdateActivityLed(DiskReadLed, read);
+        UpdateActivityLed(DiskWriteLed, write);
+
+        // Marked with "~": Windows reports disk throughput as a rate with no
+        // cumulative counter behind it, so the total is integrated from
+        // one-second samples and misses anything shorter than the gap.
+        var now = DateTime.UtcNow;
+        DiskPanel.Meta = HudConfig.EnableSessionStats
+            ? $"~{FormatBytes(_diskReadTotal.Add(metrics.ReadBytesPerSec, now))} R   ~{FormatBytes(_diskWriteTotal.Add(metrics.WriteBytesPerSec, now))} W"
+            : string.Empty;
     }
 
     private void UpdateNetworkPanel()
     {
         var metrics = _networkMonitor.GetMetrics();
-        NetDownBar.Text = metrics.DownloadBar;
-        NetDownValue.Text = $"{metrics.DownloadMbps:F1} Mbps";
-        
-        NetUpBar.Text = metrics.UploadBar;
-        NetUpValue.Text = $"{metrics.UploadMbps:F1} Mbps";
+
+        NetDownMeter.Value = metrics.DownloadMbps;
+        NetDownValue.Text = $"{metrics.DownloadMbps,6:F1} Mbps";
+
+        NetUpMeter.Value = metrics.UploadMbps;
+        NetUpValue.Text = $"{metrics.UploadMbps,6:F1} Mbps";
+
+        UpdateActivityLed(NetDownLed, metrics.DownloadMbps);
+        UpdateActivityLed(NetUpLed, metrics.UploadMbps);
+
+        // No "~" here: the adapters keep real byte counters, so these totals
+        // are exact rather than integrated.
+        NetPanel.Meta = HudConfig.EnableSessionStats
+            ? $"{FormatBytes(metrics.SessionReceivedBytes)} RX   {FormatBytes(metrics.SessionSentBytes)} TX"
+            : string.Empty;
     }
 
     /// <summary>
@@ -465,6 +516,9 @@ public partial class MainWindow
             PingAverageValue.Text = "--";
             PingJitterValue.Text = "--";
             PingLossValue.Text = "--";
+            PingTapeStrip.Samples = null;
+            PingTapeStrip.Visibility = Visibility.Collapsed;
+            PingPanel.Meta = string.Empty;
             return;
         }
 
@@ -492,31 +546,51 @@ public partial class MainWindow
             > 0 => _warningBrush,
             _ => _normalBrush
         };
+
+        PingTapeStrip.Samples = HudConfig.EnablePingTape ? ping.Recent : null;
+        PingTapeStrip.Visibility = HudConfig.EnablePingTape && ping.Recent.Count > 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        // The target and cadence belong on the border line, where every other
+        // panel states what it is measuring.
+        PingPanel.Meta = $"{ping.Host} · EVERY {_appSettings.PingIntervalSeconds:F0} S";
     }
 
+    /// <summary>
+    /// Gives each panel the worst severity among its own readings, so the
+    /// panel behind a WARNING badge is the one that lights up. The status
+    /// strip says something is wrong; this says which thing.
+    /// </summary>
+    private void ApplyPanelSeverity(SeverityBreakdown breakdown)
+    {
+        CpuPanel.Severity = _cpuSeverity.Push(breakdown.Cpu);
+        MemPanel.Severity = _memSeverity.Push(breakdown.Mem);
+        GpuPanel.Severity = _gpuSeverity.Push(breakdown.Gpu);
+    }
+
+    /// <summary>
+    /// Paints the system-state badge. Every brush here is cached in the
+    /// constructor — this runs on the poll, and the previous version resolved
+    /// two resources and allocated a fresh brush every second.
+    ///
+    /// The tints are theme tokens rather than literals now: the old hard-coded
+    /// values (#1AF59E0B, #1AEF4444) were 10% of colours the theme had since
+    /// moved away from, so the badge and its own palette disagreed.
+    /// </summary>
     private void UpdateStatusBadge(AlertSeverity severity)
     {
-        if (severity == AlertSeverity.Critical)
+        var (text, foreground, tint) = severity switch
         {
-            StatusBadgeText.Text = "CRITICAL";
-            StatusBadgeText.Foreground = (SolidColorBrush)FindResource("SeerDanger");
-            StatusBadgeBorder.BorderBrush = (SolidColorBrush)FindResource("SeerDanger");
-            StatusBadgeBorder.Background = new SolidColorBrush(Color.FromArgb(26, 239, 68, 68)); // #1AEF4444 (10% opacity)
-        }
-        else if (severity == AlertSeverity.Warning)
-        {
-            StatusBadgeText.Text = "WARNING";
-            StatusBadgeText.Foreground = (SolidColorBrush)FindResource("SeerWarning");
-            StatusBadgeBorder.BorderBrush = (SolidColorBrush)FindResource("SeerWarning");
-            StatusBadgeBorder.Background = new SolidColorBrush(Color.FromArgb(26, 245, 158, 11)); // #1AF59E0B (10% opacity)
-        }
-        else
-        {
-            StatusBadgeText.Text = "NOMINAL";
-            StatusBadgeText.Foreground = (SolidColorBrush)FindResource("SeerSuccess");
-            StatusBadgeBorder.BorderBrush = (SolidColorBrush)FindResource("SeerSuccess");
-            StatusBadgeBorder.Background = new SolidColorBrush(Color.FromArgb(26, 61, 220, 132)); // #1A3DDC84 (10% opacity)
-        }
+            AlertSeverity.Critical => ("CRITICAL", _dangerBrush, _dangerTintBrush),
+            AlertSeverity.Warning => ("WARNING", _warningBrush, _warningTintBrush),
+            _ => ("NOMINAL", _successBrush, _successTintBrush)
+        };
+
+        StatusBadgeText.Text = text;
+        StatusBadgeText.Foreground = foreground;
+        StatusBadgeBorder.BorderBrush = foreground;
+        StatusBadgeBorder.Background = tint;
     }
 
     private void AddHistory(Queue<float> queue, float value)

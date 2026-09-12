@@ -1,12 +1,17 @@
 # Seer — Agent Log Index
 
 > **Purpose:** Persistent state-tracking for AI agents and the lead developer.
-> **Last Updated:** 2026-09-06 (+08:00)
+> **Last Updated:** 2026-09-12 (+08:00)
 
 ---
 
 ## Current Focus
-- **Working on:** panel layout overflow fix — complete
+- **Working on:** restyle fallout fixes on `feature/hud-restyle` — the panel
+  layout feedback loop, the clipped top-row titles, and the OSD retheme.
+  Built clean, 79 tests pass, verified by off-screen render at three window
+  sizes plus both OSD lock states. Motion, glow weight and everything
+  elevation-gated still need a real run by the lead developer, as does the
+  overlay's drag/click-through behaviour, which no render can prove.
 - **Next up:** Tier 4 only — fan speeds beyond GPU, motherboard/VRM temps,
   disk SMART. Each is hardware-dependent and needs a feasibility smoke test
   before any UI work is committed to.
@@ -42,7 +47,10 @@
 | Configurable readouts | ✅ Complete | Metrics as taskbar tray icons and in the OSD strip, chosen per surface; severity-coloured |
 | Ping / latency panel | ✅ Complete | Start/stop control; latency, average, jitter, packet loss. Only component that sends traffic |
 | Scrollable panel layout | ✅ Complete | Panel rows size to content inside a styled `ScrollViewer`; per-core bars reflow via `WrapPanel` |
-| Unit tests | ✅ Started | `tests/Seer.Tests` — 19 tests over `ThresholdEvaluator` (the only pure-logic component) |
+| Unit tests | ✅ Started | `tests/Seer.Tests` — 79 tests over `ThresholdEvaluator`, `ReadoutFormatter`, `PingMonitor` and the living-detail maths |
+| HUD restyle (direction C) | ✅ Complete | Inset panel titles, chamfered corners, dot lattice, drawn log-scale meters, per-core matrix, halo glow |
+| Living details | ✅ Complete | Heartbeat, write-head, peak holds, severity edges, activity LEDs, rank marks, status line, graticule, core heat, ping tape, launch report; each behind a `HudConfig` flag |
+| Off-screen render harness | ✅ Complete | `--render-shot` renders the window to PNG without a desktop session; proves every `StaticResource` resolves |
 
 ---
 
@@ -63,9 +71,11 @@
 | `src/Seer/MainWindow.xaml` | Main UI layout — custom chrome title bar, status strip, all panels |
 | `src/Seer/MainWindow.xaml.cs` | Window lifecycle + orchestration — services, poll timer, geometry, tray and OSD ownership |
 | `src/Seer/MainWindow.Panels.cs` | Partial class holding all panel rendering (`Update*Panel`, status badge, history buffers) |
+| `src/Seer/MainWindow.Living.cs` | Partial class holding the parts that move — heartbeat, status line, activity LEDs, trend arrows |
+| `src/Seer/RenderShot.cs` | `--render-shot`: renders the main window at three sizes and the OSD in both lock states off-screen to PNG, then exits. The only way to check the UI without a desktop session |
 | `src/Seer/SettingsWindow.xaml(.cs)` | Settings dialog — alert thresholds and start-with-Windows, with validation |
 | `tests/Seer.Tests/` | xUnit project; `ThresholdEvaluatorTests` covers severity boundaries, escalation and missing sensors |
-| `src/Seer/OsdWindow.xaml` / `src/Seer/OsdWindow.xaml.cs` | Desktop OSD overlay with locked (click-through) and unlocked (draggable) modes |
+| `src/Seer/OsdWindow.xaml` / `src/Seer/OsdWindow.xaml.cs` | Desktop OSD overlay with locked (click-through) and unlocked (draggable) modes. Wears the panel chrome and takes every colour from `Theme.xaml`; sizes itself to the metrics selected |
 | `.gitignore` | Standard .NET gitignore (bin/, obj/, .vs/, etc.) |
 | `.agents/rules/seer_design_system.md` | Front-end design reference (colors, typography, layout rules) |
 | `src/Seer/Assets/seer.ico` | App + tray icon (multi-size); regenerate with `tools/make-icon.ps1` |
@@ -93,7 +103,12 @@
 | `src/Seer/Controls/TrayMetricIcons.cs` | Draws metric values as taskbar tray icons; owns the HICON lifetime |
 | `src/Seer/Controls/HudBackground.cs` | Builds the 40px HUD grid brush |
 | `src/Seer/Controls/HudPanel.cs` | Panel container with corner brackets |
-| `src/Seer/Controls/TrendChart.xaml(.cs)` | 120-sample rolling sparkline |
+| `src/Seer/Controls/TrendChart.xaml(.cs)` | 120-sample rolling sparkline, halo stroke, write-head, time graticule, session peak line |
+| `src/Seer/Controls/ChamferShape.cs` | The 45° cut corner, as one closed geometry so fill and outline agree. Asks for no size: its geometry comes from the previous arrange, so measuring it fed layout back into itself |
+| `src/Seer/Controls/SegmentMeter.cs` | Every bar in the app: linear or log scale, threshold ticks, over-threshold colour, peak mark |
+| `src/Seer/Controls/CoreMatrix.cs` | Per-core block; computes its own column count in `MeasureOverride`, draws heat and peak ticks |
+| `src/Seer/Controls/PingTape.cs` | One bar per ping reply, red hairline for a loss |
+| `src/Seer/Controls/Pulse.cs` | The single gate every animation passes through; honours the Windows animation setting |
 
 ### Models
 
@@ -107,7 +122,10 @@
 | `src/Seer/Models/DiskMetrics.cs` | Lightweight record for disk read/write throughput |
 | `src/Seer/Models/NetworkMetrics.cs` | Lightweight record for network up/down Mbps throughput |
 | `src/Seer/Models/ReadoutMetric.cs` | Enum of values that can be shown in the tray or OSD |
-| `src/Seer/Models/PingSnapshot.cs` | Immutable view of ping statistics handed from the background loop to the UI |
+| `src/Seer/Models/PingSnapshot.cs` | Immutable view of ping statistics handed from the background loop to the UI, plus the recent replies for the tape |
+| `src/Seer/Models/ProcessSnapshot.cs` | Top processes plus the totals behind them (process and thread counts) |
+| `src/Seer/Models/SeverityBreakdown.cs` | Per-metric severities, so a panel can colour its own edge |
+| `src/Seer/Models/EventEntry.cs` | One line in the session event log — threshold crossings and app events alike |
 
 ### Services
 
@@ -126,6 +144,15 @@
 | `src/Seer/Services/StartupService.cs` | Launch at login | HKCU Run key add/remove; deliberately not HKLM, which would auto-start elevated |
 | `src/Seer/Services/ReadoutFormatter.cs` | Readouts | Formats one metric into label/value/severity; shared by the tray icons and the OSD so they can't disagree |
 | `src/Seer/Services/PingMonitorService.cs` | Latency | Background ping loop with start/stop; publishes a `PingSnapshot` the UI polls. Never runs unasked |
+| `src/Seer/Services/PeakHold.cs` | Living details | Holds a short-term maximum, then lets it fall — the audio-meter rule |
+| `src/Seer/Services/SeverityHold.cs` | Living details | Keeps a severity on screen for a few polls after it clears, so a reading on its threshold does not flicker |
+| `src/Seer/Services/SlopeTracker.cs` | Living details | Direction of travel over a short window, with a deadband so noise is not a trend |
+| `src/Seer/Services/SessionStats.cs` | Living details | Running low/mean/high that outlive the 120-second plot |
+| `src/Seer/Services/RateIntegrator.cs` | Living details | Estimates a total from rate samples (disk has no cumulative counter) — always rendered with `~` |
+| `src/Seer/Services/PollClock.cs` | Living details | Times the poll and detects a late one |
+| `src/Seer/Services/SessionLog.cs` | Events | Threshold crossings and app events in one session log |
+| `src/Seer/Services/ProcessRankTracker.cs` | Events | Marks processes entering or climbing the top list, keyed by pid and backed by a real CPU change |
+| `src/Seer/Services/LaunchReport.cs` | Diagnostics | What the app could reach at startup: sensor counts and Ring0 availability |
 
 ---
 
@@ -193,6 +220,8 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-12 | Claude | fix: panels grew 1px per hover and collapsed panels kept their open height (ChamferShape measured its own last arrange); top-row panel titles no longer clipped by the scroll viewport; OSD retheme onto Theme.xaml tokens and panel chrome, sized to its readings; `--render-shot` now covers the OSD |
+| 2026-09-12 | Claude | feat: HUD restyle (direction C) — titles inset into panel borders, chamfered corners, drawn log-scale meters, per-core matrix with heat and peak-hold, and eleven data-driven living details behind HudConfig flags |
 | 2026-09-06 | Claude | fix: panel layout overflow — scrollable panel area with content-sized rows, per-core bars reflow instead of overlapping, ping moved to third-from-last, softer background grid |
 | 2026-09-06 | Claude | feat: ping/latency panel with start-stop control — background loop, latency/average/jitter/loss; closes the last Tier 3 item |
 | 2026-09-06 | Claude | feat: configurable readouts — metrics as taskbar tray icons (Afterburner style) and a metric-driven OSD strip, both toggled from the tray menu |
@@ -201,5 +230,3 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 | 2026-09-06 | Claude | docs: add README.md; correct MILESTONE.md (Tier 2 + network throughput were shipped but unchecked) and log the agreed backlog |
 | 2026-09-06 | Claude | feat: tester packaging — single-file self-contained publish profile, app/tray icon, build version in title bar + crash reports, %AppData% crash logging, RELEASE.md |
 | 2026-09-06 | Claude | docs: add CLAUDE.md working notes (distilled map/conventions + when to read the longer docs) |
-| 2026-08-19 | Antigravity | feat: implement network throughput (up/down Mbps) polling using NetworkInterface |
-| 2026-08-19 | Antigravity | feat: implement Disk I/O monitoring using System.Diagnostics.PerformanceCounter |

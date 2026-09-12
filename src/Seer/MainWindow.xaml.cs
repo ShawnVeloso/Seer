@@ -42,10 +42,64 @@ public partial class MainWindow : Window
     private readonly SolidColorBrush _successBrush;
     private readonly SolidColorBrush _dangerBrush;
 
+    // Badge backgrounds. Cached for the same reason as the brushes above:
+    // UpdateStatusBadge runs every second, and resolving a resource plus
+    // allocating a brush per tick is needless garbage on an always-on window.
+    private readonly SolidColorBrush _successTintBrush;
+    private readonly SolidColorBrush _warningTintBrush;
+    private readonly SolidColorBrush _dangerTintBrush;
+
+    // Peak-hold markers for the status strip. One per channel: a burst
+    // between two glances would otherwise leave no trace on the bar.
+    private readonly PeakHold _cpuPeak = new();
+
+    // One per core, rebuilt if the core count ever changes.
+    private PeakHold[] _corePeaks = Array.Empty<PeakHold>();
+    private readonly PeakHold _memPeak = new();
+    private readonly PeakHold _gpuPeak = new();
+
+    // Panel edges hold a severity for a few polls after it clears, so a
+    // reading sitting on its threshold doesn't flicker the whole panel.
+    // Marks processes that climbed into or up the top list, held for a few
+    // polls so a one-second arrow is readable.
+    private readonly ProcessRankTracker _rankTracker = new();
+
+    // Times the poll itself, and spots one that arrived late.
+    private readonly PollClock _pollClock = new();
+
+    // Which way the headline readings are heading. Temperatures get a wider
+    // deadband than loads: a load swings by its nature, where a degree of
+    // drift over ten seconds is a real thermal trend.
+    private readonly SlopeTracker _cpuTempSlope = new(deadbandPerSecond: 0.03);
+    private readonly SlopeTracker _cpuLoadSlope = new(deadbandPerSecond: 0.5);
+    private readonly SlopeTracker _gpuTempSlope = new(deadbandPerSecond: 0.03);
+    private readonly SlopeTracker _gpuLoadSlope = new(deadbandPerSecond: 0.5);
+
+    // Session low/mean/high per chart. These outlive the 120-second plot, so
+    // a peak that scrolled off an hour ago is still readable.
+    private readonly SessionStats _cpuSession = new();
+    private readonly SessionStats _memSession = new();
+    private readonly SessionStats _gpuSession = new();
+
+    // Disk has no cumulative counter to read, so its session totals are
+    // integrated from the per-second rates and shown as estimates.
+    private readonly RateIntegrator _diskReadTotal = new();
+    private readonly RateIntegrator _diskWriteTotal = new();
+
+    private readonly SeverityHold _cpuSeverity = new();
+    private readonly SeverityHold _memSeverity = new();
+    private readonly SeverityHold _gpuSeverity = new();
+
     private readonly ThresholdEvaluator _thresholdEvaluator = new();
     private AppSettings _appSettings = new();
-    private readonly ObservableCollection<AlertEvent> _alerts = new();
-    private const int MaxAlerts = 50;
+
+    // Threshold crossings and app events share one session log: when a
+    // reading jumps, the reason is often something the app itself did.
+    private readonly SessionLog _events = new();
+
+    // Processes already reported as heavy, so one busy process produces one
+    // event rather than one per second for as long as it stays busy.
+    private readonly HashSet<int> _heavyProcesses = new();
     
     private OsdWindow? _osdWindow;
     private TrayIconController? _trayIcon;
@@ -63,6 +117,9 @@ public partial class MainWindow : Window
         _dimBrush = (SolidColorBrush)FindResource("SeerTextDim");
         _successBrush = (SolidColorBrush)FindResource("SeerSuccess");
         _dangerBrush = (SolidColorBrush)FindResource("SeerDanger");
+        _successTintBrush = (SolidColorBrush)FindResource("SeerSuccessTint");
+        _warningTintBrush = (SolidColorBrush)FindResource("SeerWarningTint");
+        _dangerTintBrush = (SolidColorBrush)FindResource("SeerDangerTint");
 
         // Nothing to elevate to if we're already elevated.
         if (ElevationService.IsElevated)
@@ -92,10 +149,36 @@ public partial class MainWindow : Window
         // Fetch static system info once at startup — not on the polling timer.
         PopulateSystemInfo();
 
-        AlertsList.ItemsSource = _alerts;
+        AlertsList.ItemsSource = _events.Entries;
+
+        RecordLaunchReport();
+
+        // Windows can turn animations off while the app is running. This is a
+        // static event, so it roots the window until OnClosed unhooks it.
+        SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
 
         // --- Settings persistence ---
         Loaded += MainWindow_Loaded;
+    }
+
+    /// <summary>
+    /// Writes what the app could reach at startup into the event log: sensor
+    /// counts and whether Ring0 is available. Without this, a machine where
+    /// half the CPU readings are unavailable looks the same as a healthy one
+    /// except for some amber dashes with no explanation.
+    /// </summary>
+    private void RecordLaunchReport()
+    {
+        if (!HudConfig.EnableLaunchLog)
+            return;
+
+        foreach (var line in LaunchReport.Collect(_monitor.Computer))
+        {
+            _events.Add(
+                line.Label,
+                line.Detail,
+                line.Ok ? AlertSeverity.Nominal : AlertSeverity.Warning);
+        }
     }
 
     /// <summary>
@@ -234,6 +317,10 @@ public partial class MainWindow : Window
             // Metric selection may have changed; rebuild the icons and
             // let the overlay pick up its new list on the next poll.
             ApplyTrayReadoutSettings();
+
+            // Thresholds may have moved, which changes what counts as an
+            // alert from here on — worth a line in the log.
+            _events.Add("SETTINGS", "saved");
         }
     }
 
@@ -278,6 +365,7 @@ public partial class MainWindow : Window
 
         SaveWindowSettings();
         _diskMonitor?.Dispose();
+        _processMonitor?.Dispose();
         base.OnClosing(e);
     }
 
@@ -330,8 +418,19 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// Keeps the motion gate in step with the Windows animation setting, so
+    /// turning animations off takes effect without a restart.
+    /// </summary>
+    private static void OnSystemParametersChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SystemParameters.ClientAreaAnimation))
+            HudConfig.RefreshSystemAnimationSetting();
+    }
+
     protected override void OnClosed(EventArgs e)
     {
+        SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         _trayIcon?.Dispose();
         _trayMetrics?.Dispose();
         _pollTimer.Stop();
@@ -352,6 +451,7 @@ public partial class MainWindow : Window
         if (_pingMonitor.IsRunning)
         {
             _pingMonitor.Stop();
+            _events.Add("PING", "stopped");
         }
         else
         {
@@ -364,6 +464,10 @@ public partial class MainWindow : Window
             SettingsService.Save(_appSettings);
 
             _pingMonitor.Start(host, TimeSpan.FromSeconds(_appSettings.PingIntervalSeconds));
+
+            // The one monitor that sends traffic, so starting it is worth
+            // recording next to the readings it will change.
+            _events.Add("PING", $"started - {host}");
         }
 
         UpdatePingPanel();
@@ -408,31 +512,4 @@ public partial class MainWindow : Window
         SysGpu.Text = info.GpuModel;
     }
 
-    private void AlertsHeader_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        if (AlertsContent.Visibility == Visibility.Collapsed)
-        {
-            AlertsContent.Visibility = Visibility.Visible;
-            AlertsHeaderText.Text = "[8] ALERTS ▾";
-        }
-        else
-        {
-            AlertsContent.Visibility = Visibility.Collapsed;
-            AlertsHeaderText.Text = "[8] ALERTS ▸";
-        }
-    }
-
-    private void SystemInfoHeader_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        if (SystemInfoContent.Visibility == Visibility.Collapsed)
-        {
-            SystemInfoContent.Visibility = Visibility.Visible;
-            SystemInfoHeaderText.Text = "[i] SYSTEM INFO ▾";
-        }
-        else
-        {
-            SystemInfoContent.Visibility = Visibility.Collapsed;
-            SystemInfoHeaderText.Text = "[i] SYSTEM INFO ▸";
-        }
-    }
 }

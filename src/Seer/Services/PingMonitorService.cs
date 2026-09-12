@@ -33,8 +33,18 @@ public sealed class PingMonitorService : IDisposable
     /// </summary>
     private const int WindowSize = 60;
 
+    /// <summary>
+    /// How many individual replies are kept for the tape. Separate from
+    /// <see cref="WindowSize"/> because this one records outcomes in order,
+    /// losses included, rather than only the times that came back.
+    /// </summary>
+    private const int RecentSize = 60;
+
     private readonly object _gate = new();
     private readonly Queue<long> _window = new();
+
+    /// <summary>Every recent attempt in order; <see cref="PingSnapshot.Lost"/> for one that never returned.</summary>
+    private readonly Queue<long> _recent = new();
 
     private CancellationTokenSource? _cts;
     private Task? _loop;
@@ -75,6 +85,7 @@ public sealed class PingMonitorService : IDisposable
             _cts = cts;
             _host = host.Trim();
             _window.Clear();
+            _recent.Clear();
             _last = null;
             _sent = 0;
             _received = 0;
@@ -125,7 +136,10 @@ public sealed class PingMonitorService : IDisposable
             {
                 return new PingSnapshot(
                     _running, _host, _last, null, null, null, null,
-                    _sent, _received, _lastError);
+                    _sent, _received, _lastError)
+                {
+                    Recent = _recent.ToArray()
+                };
             }
 
             var samples = _window.ToArray();
@@ -140,7 +154,10 @@ public sealed class PingMonitorService : IDisposable
                 Jitter(samples),
                 _sent,
                 _received,
-                _lastError);
+                _lastError)
+            {
+                Recent = _recent.ToArray()
+            };
         }
     }
 
@@ -218,6 +235,8 @@ public sealed class PingMonitorService : IDisposable
                 _window.Enqueue(reply.RoundtripTime);
                 while (_window.Count > WindowSize)
                     _window.Dequeue();
+
+                RecordRecent(reply.RoundtripTime);
             }
             else
             {
@@ -226,6 +245,8 @@ public sealed class PingMonitorService : IDisposable
                 _lastError = reply.Status == IPStatus.TimedOut
                     ? null
                     : reply.Status.ToString();
+
+                RecordRecent(PingSnapshot.Lost);
             }
         }
     }
@@ -236,7 +257,22 @@ public sealed class PingMonitorService : IDisposable
         {
             _sent++;
             _lastError = message;
+
+            RecordRecent(PingSnapshot.Lost);
         }
+    }
+
+    /// <summary>
+    /// Appends one outcome to the tape buffer. Losses are kept in sequence
+    /// rather than dropped, because a gap is the whole point: the statistics
+    /// average them away, and the shape of the losses is what shows a
+    /// connection dropping every few seconds. Call under the lock.
+    /// </summary>
+    private void RecordRecent(long roundTripOrLost)
+    {
+        _recent.Enqueue(roundTripOrLost);
+        while (_recent.Count > RecentSize)
+            _recent.Dequeue();
     }
 
     public void Dispose()
