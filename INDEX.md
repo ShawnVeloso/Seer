@@ -6,16 +6,19 @@
 ---
 
 ## Current Focus
-- **Working on:** restyle fallout fixes on `feature/hud-restyle` — the panel
-  layout feedback loop, the clipped top-row titles, and the OSD retheme.
-  Built clean, 79 tests pass, verified by off-screen render at three window
-  sizes plus both OSD lock states. Motion, glow weight and everything
-  elevation-gated still need a real run by the lead developer, as does the
-  overlay's drag/click-through behaviour, which no render can prove.
-- **Next up:** Tier 4 only — fan speeds beyond GPU, motherboard/VRM temps,
-  disk SMART. Each is hardware-dependent and needs a feasibility smoke test
-  before any UI work is committed to.
-- **Blocked on:** nothing
+- **Working on:** disk health / SMART on `feature/disk-smart`. The feasibility
+  spike ran first and decided the shape: non-elevated,
+  LibreHardwareMonitorLib enumerates **zero** storage devices and the raw
+  SMART WMI classes (`MSStorageDriver_FailurePredict*`) return Access denied,
+  but `MSFT_PhysicalDisk` answers fine and carries Windows' own per-drive
+  health verdict. So the panel reads that as its floor and layers LHM's
+  temperature / wear / lifetime-writes on top only when elevated. Queries run
+  ~380ms cold, so they live on a 60s background loop, never the poll.
+- **Next up:** nothing queued. Tier 4's other two items (fan speeds beyond
+  GPU, motherboard/VRM temps) are **dumped** with reasons in MILESTONE.md —
+  both hang on SuperIO support we can't detect or explain to a tester.
+- **Blocked on:** nothing. The elevated half is unverified by the agent and
+  needs the lead developer's check — see the caveat in the log entry.
 
 > This block must always reflect current reality. Update it as the LAST step of
 > every task, in the same commit as the code change. See AGENTS.md §Sync Order.
@@ -74,6 +77,8 @@
 | `src/Seer/MainWindow.Living.cs` | Partial class holding the parts that move — heartbeat, status line, activity LEDs, trend arrows |
 | `src/Seer/RenderShot.cs` | `--render-shot`: renders the main window at three sizes and the OSD in both lock states off-screen to PNG, then exits. The only way to check the UI without a desktop session |
 | `src/Seer/SettingsWindow.xaml(.cs)` | Settings dialog — alert thresholds and start-with-Windows, with validation |
+| `src/Seer/Models/DiskHealthMetrics.cs` | `DriveHealth` + `DiskHealthSnapshot` records and the display labels; `DriveHealthState` is the coarse OK/WARN/FAIL verdict |
+| `src/Seer/Services/DiskHealthService.cs` | Drive health on a 60s background loop — `MSFT_PhysicalDisk` for the non-elevated verdict, LibreHardwareMonitorLib for SMART detail when elevated. Owns its own `Computer`, deliberately not the shared one |
 | `tests/Seer.Tests/` | xUnit project; `ThresholdEvaluatorTests` covers severity boundaries, escalation and missing sensors |
 | `src/Seer/OsdWindow.xaml` / `src/Seer/OsdWindow.xaml.cs` | Desktop OSD overlay with locked (click-through) and unlocked (draggable) modes. Wears the panel chrome and takes every colour from `Theme.xaml`; sizes itself to the metrics selected |
 | `.gitignore` | Standard .NET gitignore (bin/, obj/, .vs/, etc.) |
@@ -220,6 +225,7 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-13 | Claude | feat: disk health / SMART in panel [4] — per-drive verdict, type, size, temperature and wear on a 60s background loop. Spike first: non-elevated LHM sees zero storage devices and raw SMART WMI is Access denied, so `MSFT_PhysicalDisk` is the floor and SMART detail is layered on when elevated. **Elevated path not verified by the agent** — cannot self-elevate; needs the lead developer. Tier 4's fan-speed and VRM-temp items dumped with reasons |
 | 2026-09-12 | Claude | fix: panels grew 1px per hover and collapsed panels kept their open height (ChamferShape measured its own last arrange); top-row panel titles no longer clipped by the scroll viewport; OSD retheme onto Theme.xaml tokens and panel chrome, sized to its readings; `--render-shot` now covers the OSD |
 | 2026-09-12 | Claude | feat: HUD restyle (direction C) — titles inset into panel borders, chamfered corners, drawn log-scale meters, per-core matrix with heat and peak-hold, and eleven data-driven living details behind HudConfig flags |
 | 2026-09-06 | Claude | fix: panel layout overflow — scrollable panel area with content-sized rows, per-core bars reflow instead of overlapping, ping moved to third-from-last, softer background grid |
