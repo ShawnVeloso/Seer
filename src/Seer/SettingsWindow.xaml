@@ -13,12 +13,43 @@
         TextOptions.TextFormattingMode="Display"
         TextOptions.TextRenderingMode="ClearType">
 
+    <!-- Same custom chrome as MainWindow: the system caption is replaced
+         by the title bar below. Title above is kept for Alt-Tab. -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32"
+                      ResizeBorderThickness="0"
+                      GlassFrameThickness="0"
+                      CornerRadius="0"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
     <Border BorderBrush="{StaticResource SeerBorder}" BorderThickness="1" Padding="0">
         <StackPanel Margin="0">
 
-            <!-- Header -->
-            <Border BorderBrush="{StaticResource SeerBorder}" BorderThickness="0,0,0,1" Padding="12,8">
-                <TextBlock Text="[*] SETTINGS" Style="{StaticResource PanelHeaderStyle}" />
+            <!-- ═══ Title Bar (32px) — draggable via WindowChrome ═══ -->
+            <Border Height="32"
+                    Background="{StaticResource SeerPanel}"
+                    BorderBrush="{StaticResource SeerBorder}"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="SEER"
+                                   Style="{StaticResource WordmarkStyle}"
+                                   Margin="12,0,0,0" />
+                        <TextBlock Text="[*] SETTINGS"
+                                   Style="{StaticResource PanelHeaderStyle}"
+                                   VerticalAlignment="Center"
+                                   Margin="10,1,0,0" />
+                    </StackPanel>
+
+                    <!-- Closing is the same as Cancel: edits are discarded. -->
+                    <Button Style="{StaticResource CloseButtonStyle}"
+                            Content="✕"
+                            HorizontalAlignment="Right"
+                            ToolTip="Close without saving"
+                            WindowChrome.IsHitTestVisibleInChrome="True"
+                            Click="CancelButton_Click" />
+                </Grid>
             </Border>
 
             <!-- ── Thresholds ─────────────────────────────────────────── -->

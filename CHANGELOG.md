@@ -10,6 +10,8 @@
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-06 | Claude | feat: tester packaging — single-file self-contained publish profile, app/tray icon, build version in title bar + crash reports, %AppData% crash logging, RELEASE.md |
+| 2026-09-06 | Claude | docs: add CLAUDE.md working notes (distilled map/conventions + when to read the longer docs) |
 | 2026-08-19 | Antigravity | feat: implement network throughput (up/down Mbps) polling using NetworkInterface |
 | 2026-08-19 | Antigravity | feat: implement Disk I/O monitoring using System.Diagnostics.PerformanceCounter |
 | 2026-08-19 | Antigravity | feat: implement top processes by CPU/RAM using System.Diagnostics.Process |

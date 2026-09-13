@@ -17,11 +17,18 @@ namespace Seer.Controls;
 /// it doesn't cover anything, and it stays readable when a fullscreen
 /// game owns the display.
 ///
-/// Each refresh builds a fresh bitmap and turns it into an HICON. Windows
-/// copies the icon when it's assigned, so the handle must be destroyed
-/// afterwards — <see cref="Icon.FromHandle"/> does not own it, and
-/// leaking one per metric per second would exhaust the GDI handle quota
-/// within an hour.
+/// Each refresh builds a fresh bitmap and turns it into an HICON, which
+/// this class owns and destroys once its replacement is installed — see
+/// <see cref="ApplyIcon"/> for why the order matters.
+///
+/// Every metric gets one <see cref="NotifyIcon"/>, created once, in
+/// <see cref="ReadoutFormatter.All"/> order, and never recreated. Windows
+/// identifies a tray icon by the exe path plus the ID WinForms hands out
+/// from a process-wide counter at construction. Recreating icons on a
+/// settings change handed out fresh IDs, so the shell treated them as new
+/// icons: appended after other apps' icons, and any position or pin the
+/// user had given them forgotten. Selection now only toggles visibility,
+/// which removes and re-adds the icon under the same ID.
 /// </summary>
 public sealed class TrayMetricIcons : IDisposable
 {
@@ -55,30 +62,60 @@ public sealed class TrayMetricIcons : IDisposable
     /// <summary>Raised when any of the metric icons is double-clicked.</summary>
     public event Action? ShowRequested;
 
+    /// <summary>
+    /// Creates every metric's icon, hidden. Construct this straight after
+    /// the main tray icon, every launch, so the IDs — and therefore the
+    /// shell's memory of where the icons sit — are the same each run.
+    /// </summary>
     public TrayMetricIcons()
     {
         // Matches what the shell asks for, so the number isn't resampled.
         _size = Math.Max(16, SystemInformation.SmallIconSize.Width);
-    }
 
-    /// <summary>
-    /// Rebuilds the set of icons to match <paramref name="metrics"/>.
-    /// Called when the selection changes; cheap enough to call with an
-    /// unchanged list, but not on the poll timer.
-    /// </summary>
-    public void SetMetrics(IEnumerable<ReadoutMetric> metrics)
-    {
-        Clear();
-
-        foreach (var metric in metrics)
+        foreach (var metric in ReadoutFormatter.All)
         {
             var notifyIcon = new NotifyIcon
             {
-                Visible = true,
+                Visible = false,
                 Text = ReadoutFormatter.DisplayName(metric)
             };
             notifyIcon.DoubleClick += (_, _) => ShowRequested?.Invoke();
             _slots.Add(new Slot { Metric = metric, Icon = notifyIcon });
+        }
+    }
+
+    /// <summary>
+    /// Shows exactly the icons in <paramref name="metrics"/> and hides the
+    /// rest. Called when the selection changes; cheap enough to call with
+    /// an unchanged list, but not on the poll timer.
+    /// </summary>
+    public void SetMetrics(IEnumerable<ReadoutMetric> metrics)
+    {
+        if (_disposed)
+            return;
+
+        var wanted = new HashSet<ReadoutMetric>(metrics);
+
+        foreach (var slot in _slots)
+        {
+            var show = wanted.Contains(slot.Metric);
+            if (show == slot.Icon.Visible)
+                continue;
+
+            if (show)
+            {
+                // Draw before showing, so the shell never adds a blank
+                // icon; the next poll replaces the placeholder.
+                slot.Icon.Text = ReadoutFormatter.DisplayName(slot.Metric);
+                ApplyIcon(slot, Placeholder, ColorFor(AlertSeverity.Nominal));
+                slot.LastText = Placeholder;
+                slot.LastSeverity = AlertSeverity.Nominal;
+                slot.Icon.Visible = true;
+            }
+            else
+            {
+                slot.Icon.Visible = false;
+            }
         }
     }
 
@@ -94,6 +131,9 @@ public sealed class TrayMetricIcons : IDisposable
 
         foreach (var slot in _slots)
         {
+            if (!slot.Icon.Visible)
+                continue;
+
             var reading = ReadoutFormatter.Read(slot.Metric, cpu, mem, gpu, settings);
 
             if (reading.Compact == slot.LastText && reading.Severity == slot.LastSeverity)
@@ -103,7 +143,7 @@ public sealed class TrayMetricIcons : IDisposable
             slot.LastSeverity = reading.Severity;
 
             slot.Icon.Text = Truncate($"{ReadoutFormatter.DisplayName(slot.Metric)}: {reading.Full}");
-            ApplyIcon(slot, reading);
+            ApplyIcon(slot, reading.Compact, ColorFor(reading.Severity));
         }
     }
 
@@ -118,9 +158,9 @@ public sealed class TrayMetricIcons : IDisposable
     /// no managed exception and so no crash log. The previous handle is
     /// therefore only released once its replacement is in place.
     /// </summary>
-    private void ApplyIcon(Slot slot, ReadoutValue reading)
+    private void ApplyIcon(Slot slot, string text, Color color)
     {
-        using var bitmap = Render(reading.Compact, ColorFor(reading.Severity));
+        using var bitmap = Render(text, color);
 
         var handle = bitmap.GetHicon();
         // Icon.FromHandle does not take ownership, so the raw handle is
@@ -209,6 +249,7 @@ public sealed class TrayMetricIcons : IDisposable
         return bitmap;
     }
 
+    private const string Placeholder = "--";
     private const string FontFamilyName = "Segoe UI";
     private const float MinFontPx = 8f;
 
@@ -224,9 +265,16 @@ public sealed class TrayMetricIcons : IDisposable
     private static string Truncate(string text) =>
         text.Length <= 63 ? text : text.Substring(0, 63);
 
-    /// <summary>Removes every icon from the tray.</summary>
-    public void Clear()
+    /// <summary>
+    /// Removes every icon from the tray and frees them. Only on shutdown:
+    /// to hide the readouts, call <see cref="SetMetrics"/> with an empty
+    /// list, which keeps the icons' identities for when they come back.
+    /// </summary>
+    public void Dispose()
     {
+        if (_disposed)
+            return;
+
         foreach (var slot in _slots)
         {
             // Hide before disposing, or the shell leaves a ghost icon
@@ -241,14 +289,6 @@ public sealed class TrayMetricIcons : IDisposable
         }
 
         _slots.Clear();
-    }
-
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
-
-        Clear();
         _disposed = true;
     }
 }
