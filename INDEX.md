@@ -1,24 +1,21 @@
 # Seer — Agent Log Index
 
 > **Purpose:** Persistent state-tracking for AI agents and the lead developer.
-> **Last Updated:** 2026-09-12 (+08:00)
+> **Last Updated:** 2026-09-13 (+08:00)
 
 ---
 
 ## Current Focus
-- **Working on:** disk health / SMART on `feature/disk-smart`. The feasibility
-  spike ran first and decided the shape: non-elevated,
-  LibreHardwareMonitorLib enumerates **zero** storage devices and the raw
-  SMART WMI classes (`MSStorageDriver_FailurePredict*`) return Access denied,
-  but `MSFT_PhysicalDisk` answers fine and carries Windows' own per-drive
-  health verdict. So the panel reads that as its floor and layers LHM's
-  temperature / wear / lifetime-writes on top only when elevated. Queries run
-  ~380ms cold, so they live on a 60s background loop, never the poll.
-- **Next up:** nothing queued. Tier 4's other two items (fan speeds beyond
-  GPU, motherboard/VRM temps) are **dumped** with reasons in MILESTONE.md —
-  both hang on SuperIO support we can't detect or explain to a tester.
-- **Blocked on:** nothing. The elevated half is unverified by the agent and
-  needs the lead developer's check — see the caveat in the log entry.
+- **Working on:** pre-release polish on `fix/settings-titlebar-tray-order`
+  ahead of the first tester build. The settings dialog now wears the app's
+  own title bar; tray metric icons keep a stable shell identity. Windows
+  still decides where tray icons sit and whether they show on the taskbar —
+  there is no supported API — so the fix makes the user's one-time
+  arrangement stick rather than forcing a position.
+- **Next up:** cut and publish `v0.1.0-alpha` as a GitHub pre-release
+  (release-prep docs PR, publish, smoke-test `.dist/Seer.exe`, tag).
+- **Blocked on:** nothing. The lead developer checks the tray arrangement
+  across a settings save and a restart, and the elevated disk-health path.
 
 > This block must always reflect current reality. Update it as the LAST step of
 > every task, in the same commit as the code change. See AGENTS.md §Sync Order.
@@ -75,8 +72,8 @@
 | `src/Seer/MainWindow.xaml.cs` | Window lifecycle + orchestration — services, poll timer, geometry, tray and OSD ownership |
 | `src/Seer/MainWindow.Panels.cs` | Partial class holding all panel rendering (`Update*Panel`, status badge, history buffers) |
 | `src/Seer/MainWindow.Living.cs` | Partial class holding the parts that move — heartbeat, status line, activity LEDs, trend arrows |
-| `src/Seer/RenderShot.cs` | `--render-shot`: renders the main window at three sizes and the OSD in both lock states off-screen to PNG, then exits. The only way to check the UI without a desktop session |
-| `src/Seer/SettingsWindow.xaml(.cs)` | Settings dialog — alert thresholds and start-with-Windows, with validation |
+| `src/Seer/RenderShot.cs` | `--render-shot`: renders the main window at three sizes, the OSD in both lock states and the settings dialog off-screen to PNG, then exits. The only way to check the UI without a desktop session |
+| `src/Seer/SettingsWindow.xaml(.cs)` | Settings dialog — alert thresholds, start-with-Windows and readout picker, with validation; draws its own title bar via WindowChrome |
 | `src/Seer/Models/DiskHealthMetrics.cs` | `DriveHealth` + `DiskHealthSnapshot` records and the display labels; `DriveHealthState` is the coarse OK/WARN/FAIL verdict |
 | `src/Seer/Services/DiskHealthService.cs` | Drive health on a 60s background loop — `MSFT_PhysicalDisk` for the non-elevated verdict, LibreHardwareMonitorLib for SMART detail when elevated. Owns its own `Computer`, deliberately not the shared one |
 | `tests/Seer.Tests/` | xUnit project; `ThresholdEvaluatorTests` covers severity boundaries, escalation and missing sensors |
@@ -105,7 +102,7 @@
 | File | Purpose |
 |------|---------|
 | `src/Seer/Controls/TrayIconController.cs` | Owns the tray icon and context menu; raises events, holds no app state |
-| `src/Seer/Controls/TrayMetricIcons.cs` | Draws metric values as taskbar tray icons; owns the HICON lifetime |
+| `src/Seer/Controls/TrayMetricIcons.cs` | Draws metric values as taskbar tray icons; one icon per metric created once in fixed order (stable shell identity), owns the HICON lifetime |
 | `src/Seer/Controls/HudBackground.cs` | Builds the 40px HUD grid brush |
 | `src/Seer/Controls/HudPanel.cs` | Panel container with corner brackets |
 | `src/Seer/Controls/TrendChart.xaml(.cs)` | 120-sample rolling sparkline, halo stroke, write-head, time graticule, session peak line |
@@ -225,6 +222,7 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-13 | Claude | fix: settings dialog draws its own themed title bar (WindowChrome, SEER wordmark, ✕ = Cancel); tray metric icons are created once in fixed order and only shown/hidden, so their shell identity — and any position or pin the user gives them — survives settings saves and restarts. `--render-shot` now covers the settings dialog. **Tray arrangement not verified by the agent** — shell state on the lead developer's machine |
 | 2026-09-13 | Claude | feat: disk health / SMART in panel [4] — per-drive verdict, type, size, temperature and wear on a 60s background loop. Spike first: non-elevated LHM sees zero storage devices and raw SMART WMI is Access denied, so `MSFT_PhysicalDisk` is the floor and SMART detail is layered on when elevated. **Elevated path not verified by the agent** — cannot self-elevate; needs the lead developer. Tier 4's fan-speed and VRM-temp items dumped with reasons |
 | 2026-09-12 | Claude | fix: panels grew 1px per hover and collapsed panels kept their open height (ChamferShape measured its own last arrange); top-row panel titles no longer clipped by the scroll viewport; OSD retheme onto Theme.xaml tokens and panel chrome, sized to its readings; `--render-shot` now covers the OSD |
 | 2026-09-12 | Claude | feat: HUD restyle (direction C) — titles inset into panel borders, chamfered corners, drawn log-scale meters, per-core matrix with heat and peak-hold, and eleven data-driven living details behind HudConfig flags |
@@ -234,5 +232,3 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 | 2026-09-06 | Claude | feat: settings window — editable alert thresholds and start-with-Windows, reachable from the title bar and tray; adds Seer.Tests with 19 ThresholdEvaluator tests |
 | 2026-09-06 | Claude | refactor: split MainWindow.xaml.cs (776→321 lines) — rendering to MainWindow.Panels.cs; tray, background grid, elevation and window placement to real classes |
 | 2026-09-06 | Claude | docs: add README.md; correct MILESTONE.md (Tier 2 + network throughput were shipped but unchecked) and log the agreed backlog |
-| 2026-09-06 | Claude | feat: tester packaging — single-file self-contained publish profile, app/tray icon, build version in title bar + crash reports, %AppData% crash logging, RELEASE.md |
-| 2026-09-06 | Claude | docs: add CLAUDE.md working notes (distilled map/conventions + when to read the longer docs) |

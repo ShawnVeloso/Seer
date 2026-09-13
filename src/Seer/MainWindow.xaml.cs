@@ -243,6 +243,17 @@ public partial class MainWindow : Window
             Activate();
         };
 
+        // Straight after the main icon, every launch, whatever is selected:
+        // the icons' IDs come from creation order, and the shell remembers
+        // position and pinning by ID. See TrayMetricIcons.
+        _trayMetrics = new TrayMetricIcons();
+        _trayMetrics.ShowRequested += () =>
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+        };
+
         _trayIcon.ExitRequested += () =>
         {
             _isExplicitShutdown = true;
@@ -274,32 +285,15 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Creates or tears down the taskbar metric icons to match settings.
-    /// Safe to call repeatedly — it rebuilds the icon set from scratch,
-    /// which is why it's called on settings changes and not per poll.
+    /// Shows or hides the taskbar metric icons to match settings. Hiding
+    /// never disposes them, so they keep their identity in the shell.
+    /// Called on settings changes, not per poll.
     /// </summary>
     private void ApplyTrayReadoutSettings()
     {
-        if (_appSettings.ShowTrayReadouts && _appSettings.TrayMetrics.Count > 0)
-        {
-            if (_trayMetrics == null)
-            {
-                _trayMetrics = new TrayMetricIcons();
-                _trayMetrics.ShowRequested += () =>
-                {
-                    Show();
-                    WindowState = WindowState.Normal;
-                    Activate();
-                };
-            }
-
-            _trayMetrics.SetMetrics(_appSettings.TrayMetrics);
-        }
-        else
-        {
-            _trayMetrics?.Dispose();
-            _trayMetrics = null;
-        }
+        _trayMetrics?.SetMetrics(_appSettings.ShowTrayReadouts
+            ? _appSettings.TrayMetrics
+            : Array.Empty<ReadoutMetric>());
     }
 
     /// <summary>
