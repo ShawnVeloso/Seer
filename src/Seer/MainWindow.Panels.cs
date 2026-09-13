@@ -471,6 +471,70 @@ public partial class MainWindow
         DiskPanel.Meta = HudConfig.EnableSessionStats
             ? $"~{FormatBytes(_diskReadTotal.Add(metrics.ReadBytesPerSec, now))} R   ~{FormatBytes(_diskWriteTotal.Add(metrics.WriteBytesPerSec, now))} W"
             : string.Empty;
+
+        UpdateDiskHealth();
+    }
+
+    /// <summary>
+    /// The snapshot currently on screen. Held so the rows are only rebuilt
+    /// when the background loop actually publishes a new one — it refreshes
+    /// once a minute while this runs every second, so reassigning
+    /// <c>ItemsSource</c> each tick would throw away and regenerate every
+    /// container sixty times per reading for nothing.
+    /// </summary>
+    private DiskHealthSnapshot? _shownDiskHealth;
+
+    /// <summary>
+    /// Renders drive health from the background loop's latest snapshot.
+    ///
+    /// Read on the UI timer rather than pushed, for the same reason the ping
+    /// panel is: the loop keeps its own cadence and the UI takes whatever is
+    /// current when it happens to look.
+    /// </summary>
+    private void UpdateDiskHealth()
+    {
+        var snapshot = _diskHealth.GetSnapshot();
+
+        if (ReferenceEquals(snapshot, _shownDiskHealth))
+            return;
+
+        _shownDiskHealth = snapshot;
+
+        DiskHealthList.ItemsSource = snapshot.Drives;
+
+        // The panel's brackets carry the worst verdict. A failing disk is not
+        // a transient spike the way a load reading is, so it goes straight on
+        // without a SeverityHold to smooth it.
+        DiskPanel.Severity = snapshot.Worst switch
+        {
+            DriveHealthState.Unhealthy => AlertSeverity.Critical,
+            DriveHealthState.Warning => AlertSeverity.Warning,
+            _ => AlertSeverity.Nominal
+        };
+
+        var note = DiskHealthNoteFor(snapshot);
+        DiskHealthNote.Text = note ?? string.Empty;
+        DiskHealthNote.Visibility = note == null ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>
+    /// Why the detail columns are blank, or null when they aren't.
+    ///
+    /// Non-elevated is the common case and says so plainly, because the
+    /// alternative is a user reading two dashes as a bug.
+    /// </summary>
+    private static string? DiskHealthNoteFor(DiskHealthSnapshot snapshot)
+    {
+        if (snapshot.SampledAt == null)
+            return "Reading drive health…";
+
+        if (snapshot.Drives.Count == 0)
+            return snapshot.Error ?? "No physical drives reported.";
+
+        if (!snapshot.SmartAvailable)
+            return "Temperature and wear need administrator access — the health verdict above does not.";
+
+        return null;
     }
 
     private void UpdateNetworkPanel()

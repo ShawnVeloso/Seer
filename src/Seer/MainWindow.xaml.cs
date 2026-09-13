@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private readonly DiskMonitorService _diskMonitor;
     private readonly NetworkMonitorService _networkMonitor;
     private readonly PingMonitorService _pingMonitor = new();
+    private readonly DiskHealthService _diskHealth = new();
     private readonly DispatcherTimer _pollTimer;
 
     // History queues for trend charts
@@ -131,6 +132,10 @@ public partial class MainWindow : Window
         _processMonitor = new ProcessMonitorService();
         _diskMonitor = new DiskMonitorService();
         _networkMonitor = new NetworkMonitorService();
+
+        // Owns a slow background loop rather than riding the poll: the WMI
+        // and SMART reads behind it cost hundreds of milliseconds.
+        _diskHealth.Start();
 
         _pollTimer = new DispatcherTimer
         {
@@ -435,6 +440,7 @@ public partial class MainWindow : Window
         _trayMetrics?.Dispose();
         _pollTimer.Stop();
         _pingMonitor.Dispose();
+        _diskHealth.Dispose();
         _monitor.Dispose();
         _osdWindow?.Close();
         base.OnClosed(e);

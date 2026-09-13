@@ -446,7 +446,7 @@
 
                 <!-- ═══ Disk I/O Panel ═══ -->
                 <controls:HudPanel x:Name="DiskPanel" Grid.Row="6" Grid.Column="0"
-                                   IndexTag="[4]" Header="DISK I/O">
+                                   IndexTag="[4]" Header="DISK">
                     <Grid>
                         <StackPanel Margin="12,10,12,10">
                             <!-- Read -->
@@ -490,6 +490,153 @@
                                                        PeakBrush="{StaticResource SeerPeak}" />
                                 <TextBlock Grid.Column="2" x:Name="DiskWriteValue" Text="-- MB/s" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" TextAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
+
+                            <!-- ── Drive health ──────────────────────────────
+                                 Refreshed on its own slow loop, not the poll:
+                                 the queries behind it run in hundreds of
+                                 milliseconds and wear moves over months. -->
+                            <Border Height="1" Margin="0,11,0,9"
+                                    Background="{StaticResource SeerBorder}" />
+
+                            <Grid Margin="0,0,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <!-- 48, not 40: "HEALTH" clips at 40. -->
+                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="40" />
+                                    <ColumnDefinition Width="58" />
+                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="46" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="HEALTH" Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" Opacity="0.65" />
+                                <TextBlock Grid.Column="2" Text="TYPE"   Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" Opacity="0.65" />
+                                <TextBlock Grid.Column="3" Text="SIZE"   Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" Opacity="0.65" TextAlignment="Right" />
+                                <TextBlock Grid.Column="4" Text="TEMP"   Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" Opacity="0.65" TextAlignment="Right" />
+                                <TextBlock Grid.Column="5" Text="LIFE"   Style="{StaticResource BaseTextStyle}" Foreground="{StaticResource SeerTextDim}" Opacity="0.65" TextAlignment="Right" />
+                            </Grid>
+
+                            <ItemsControl x:Name="DiskHealthList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <!-- Must track the header grid above. -->
+                                                <ColumnDefinition Width="48" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="40" />
+                                                <ColumnDefinition Width="58" />
+                                                <ColumnDefinition Width="50" />
+                                                <ColumnDefinition Width="46" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Verdict. Drawn pip plus the word,
+                                                 so the state survives being read
+                                                 without colour. -->
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Rectangle Width="5" Height="5" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                    <Rectangle.Style>
+                                                        <Style TargetType="Rectangle">
+                                                            <Setter Property="Fill" Value="{StaticResource SeerTextDim}" />
+                                                            <Setter Property="Opacity" Value="0.35" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Health}" Value="Healthy">
+                                                                    <Setter Property="Fill" Value="{StaticResource SeerAccent}" />
+                                                                    <Setter Property="Opacity" Value="0.9" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Health}" Value="Warning">
+                                                                    <Setter Property="Fill" Value="{StaticResource SeerWarning}" />
+                                                                    <Setter Property="Opacity" Value="1" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Health}" Value="Unhealthy">
+                                                                    <Setter Property="Fill" Value="{StaticResource SeerDanger}" />
+                                                                    <Setter Property="Opacity" Value="1" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Rectangle.Style>
+                                                </Rectangle>
+                                                <TextBlock Text="{Binding HealthLabel}" VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextStyle}">
+                                                            <Setter Property="Foreground" Value="{StaticResource SeerTextDim}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Health}" Value="Healthy">
+                                                                    <Setter Property="Foreground" Value="{StaticResource SeerText}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Health}" Value="Warning">
+                                                                    <Setter Property="Foreground" Value="{StaticResource SeerWarning}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Health}" Value="Unhealthy">
+                                                                    <Setter Property="Foreground" Value="{StaticResource SeerDanger}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                       Style="{StaticResource BaseTextStyle}"
+                                                       Foreground="{StaticResource SeerText}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding Name}"
+                                                       Margin="0,0,10,0" VerticalAlignment="Center" />
+
+                                            <TextBlock Grid.Column="2" Text="{Binding MediaType}"
+                                                       Style="{StaticResource BaseTextStyle}"
+                                                       Foreground="{StaticResource SeerTextDim}" VerticalAlignment="Center" />
+
+                                            <TextBlock Grid.Column="3" Text="{Binding CapacityLabel}"
+                                                       Style="{StaticResource BaseTextStyle}"
+                                                       Foreground="{StaticResource SeerTextDim}"
+                                                       TextAlignment="Right" VerticalAlignment="Center" />
+
+                                            <TextBlock Grid.Column="4" Text="{Binding TemperatureLabel}"
+                                                       TextAlignment="Right" VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextStyle}">
+                                                        <Setter Property="Foreground" Value="{StaticResource SeerTextDim}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding DetailExpected}" Value="True">
+                                                                <Setter Property="Foreground" Value="{StaticResource SeerText}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding TemperatureMissing}" Value="True">
+                                                                <Setter Property="Foreground" Value="{StaticResource SeerWarning}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+
+                                            <TextBlock Grid.Column="5" Text="{Binding LifeLabel}"
+                                                       TextAlignment="Right" VerticalAlignment="Center"
+                                                       ToolTip="{Binding WrittenLabel}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextStyle}">
+                                                        <Setter Property="Foreground" Value="{StaticResource SeerTextDim}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding DetailExpected}" Value="True">
+                                                                <Setter Property="Foreground" Value="{StaticResource SeerText}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding LifeMissing}" Value="True">
+                                                                <Setter Property="Foreground" Value="{StaticResource SeerWarning}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Says why temp and life are blank. Without it a
+                                 non-elevated user reads two dashes as broken. -->
+                            <TextBlock x:Name="DiskHealthNote"
+                                       Style="{StaticResource BaseTextStyle}"
+                                       Foreground="{StaticResource SeerTextDim}"
+                                       TextWrapping="Wrap" Margin="0,5,0,0"
+                                       Visibility="Collapsed" />
                         </StackPanel>
                     </Grid>
                 </controls:HudPanel>
