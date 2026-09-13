@@ -6,16 +6,17 @@
 ---
 
 ## Current Focus
-- **Working on:** pre-release polish on `fix/settings-titlebar-tray-order`
-  ahead of the first tester build. The settings dialog now wears the app's
-  own title bar; tray metric icons keep a stable shell identity. Windows
-  still decides where tray icons sit and whether they show on the taskbar —
-  there is no supported API — so the fix makes the user's one-time
-  arrangement stick rather than forcing a position.
-- **Next up:** cut and publish `v0.1.0-alpha` as a GitHub pre-release
-  (release-prep docs PR, publish, smoke-test `.dist/Seer.exe`, tag).
-- **Blocked on:** nothing. The lead developer checks the tray arrangement
-  across a settings save and a restart, and the elevated disk-health path.
+- **Working on:** first tester release, `v0.1.0-alpha`, on
+  `release/v0.1.0-alpha`. `.dist/Seer.exe` published from main `9b80217`
+  and smoke-tested non-elevated for 30 s (no crash log). Once this docs PR
+  merges, it's tagged and attached to a GitHub pre-release.
+- **Next up:** tester feedback. Open question from the smoke test: the
+  single-file build carries ~80 MB more private memory than the Debug build
+  (see RELEASE.md Known friction) — measure `EnableCompressionInSingleFile`
+  off before a wider release.
+- **Blocked on:** nothing. The lead developer still checks the tray
+  arrangement across a settings save and a restart, and the elevated
+  disk-health path.
 
 > This block must always reflect current reality. Update it as the LAST step of
 > every task, in the same commit as the code change. See AGENTS.md §Sync Order.
@@ -222,6 +223,7 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-13 | Claude | docs: prepare v0.1.0-alpha tester release — RELEASE.md gains a Publishing section (GitHub pre-release, SHA-256, never replace an exe on an existing tag), tray-pinning and disk-health notes for testers, the real button label (RUN AS ADMIN), and the measured single-file memory overhead as known friction |
 | 2026-09-13 | Claude | fix: settings dialog draws its own themed title bar (WindowChrome, SEER wordmark, ✕ = Cancel); tray metric icons are created once in fixed order and only shown/hidden, so their shell identity — and any position or pin the user gives them — survives settings saves and restarts. `--render-shot` now covers the settings dialog. **Tray arrangement not verified by the agent** — shell state on the lead developer's machine |
 | 2026-09-13 | Claude | feat: disk health / SMART in panel [4] — per-drive verdict, type, size, temperature and wear on a 60s background loop. Spike first: non-elevated LHM sees zero storage devices and raw SMART WMI is Access denied, so `MSFT_PhysicalDisk` is the floor and SMART detail is layered on when elevated. **Elevated path not verified by the agent** — cannot self-elevate; needs the lead developer. Tier 4's fan-speed and VRM-temp items dumped with reasons |
 | 2026-09-12 | Claude | fix: panels grew 1px per hover and collapsed panels kept their open height (ChamferShape measured its own last arrange); top-row panel titles no longer clipped by the scroll viewport; OSD retheme onto Theme.xaml tokens and panel chrome, sized to its readings; `--render-shot` now covers the OSD |
@@ -231,4 +233,3 @@ dotnet publish src/Seer/Seer.csproj -p:PublishProfile=TesterBuild
 | 2026-09-06 | Claude | feat: configurable readouts — metrics as taskbar tray icons (Afterburner style) and a metric-driven OSD strip, both toggled from the tray menu |
 | 2026-09-06 | Claude | feat: settings window — editable alert thresholds and start-with-Windows, reachable from the title bar and tray; adds Seer.Tests with 19 ThresholdEvaluator tests |
 | 2026-09-06 | Claude | refactor: split MainWindow.xaml.cs (776→321 lines) — rendering to MainWindow.Panels.cs; tray, background grid, elevation and window placement to real classes |
-| 2026-09-06 | Claude | docs: add README.md; correct MILESTONE.md (Tier 2 + network throughput were shipped but unchecked) and log the agreed backlog |

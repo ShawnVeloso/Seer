@@ -10,6 +10,7 @@
 
 | Date | Agent | Action |
 |------|-------|--------|
+| 2026-09-06 | Claude | docs: add README.md; correct MILESTONE.md (Tier 2 + network throughput were shipped but unchecked) and log the agreed backlog |
 | 2026-09-06 | Claude | feat: tester packaging — single-file self-contained publish profile, app/tray icon, build version in title bar + crash reports, %AppData% crash logging, RELEASE.md |
 | 2026-09-06 | Claude | docs: add CLAUDE.md working notes (distilled map/conventions + when to read the longer docs) |
 | 2026-08-19 | Antigravity | feat: implement network throughput (up/down Mbps) polling using NetworkInterface |
