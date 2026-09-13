@@ -100,8 +100,44 @@ internal static class RenderShot
         }
 
         RenderOsd(outputDir);
+        RenderSettings(outputDir);
 
         return outputDir;
+    }
+
+    /// <summary>
+    /// The settings dialog, which draws its own title bar. Like the overlay it
+    /// is a separate window the main shot never reaches. Rendered from default
+    /// settings; the dialog reads but never writes during construction.
+    /// </summary>
+    private static void RenderSettings(string outputDir)
+    {
+        var dialog = new SettingsWindow(new AppSettings());
+
+        if (dialog.Content is not FrameworkElement content)
+            throw new InvalidOperationException("SettingsWindow.Content is not a FrameworkElement.");
+
+        // Fixed width, height to content — the same as SizeToContent="Height".
+        var width = (int)dialog.Width;
+        content.Measure(new Size(width, double.PositiveInfinity));
+        var height = (int)Math.Ceiling(content.DesiredSize.Height);
+
+        content.Arrange(new Rect(0, 0, width, height));
+        content.UpdateLayout();
+
+        var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+        var ground = new DrawingVisual();
+        using (var dc = ground.RenderOpen())
+            dc.DrawRectangle(GroundBrush(dialog), null, new Rect(0, 0, width, height));
+
+        bitmap.Render(ground);
+        bitmap.Render(content);
+
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+
+        using var stream = File.Create(Path.Combine(outputDir, "seer-settings.png"));
+        encoder.Save(stream);
     }
 
     /// <summary>
